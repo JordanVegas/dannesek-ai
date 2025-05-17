@@ -2,7 +2,6 @@ import Colors from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import { TouchableOpacity } from 'react-native';
-
 import { SQLiteProvider } from 'expo-sqlite/next';
 import { migrateDbIfNeeded } from '@/utils/Database';
 import { RevenueCatProvider } from '@/providers/RevenueCat';
@@ -27,7 +26,7 @@ const Layout = () => {
               headerStyle: { backgroundColor: Colors.selected },
               headerRight: () => (
                 <TouchableOpacity
-                  onPress={() => router.back()}
+                  onPress={() => router.replace('/(auth)/(drawer)/(chat)/new')}
                   style={{ backgroundColor: Colors.greyLight, borderRadius: 20, padding: 4 }}>
                   <Ionicons name="close-outline" size={16} color={Colors.grey} />
                 </TouchableOpacity>

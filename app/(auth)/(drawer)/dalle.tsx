@@ -29,15 +29,15 @@ const Page = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [working, setWorking] = useState(false);
 
-  if (!key || key === '' || !organization || organization === '') {
-    return <Redirect href={'/(auth)/(modal)/settings'} />;
-  }
+  console.log('key',  process.env.EXPO_PUBLIC_OPENAI_API_KEY);
+  console.log('organization', process.env.EXPO_PUBLIC_OPENAI_ORGANIZATION);
+  
 
   const openAI = useMemo(
     () =>
       new OpenAI({
-        apiKey: key,
-        organization,
+        apiKey: process.env.EXPO_PUBLIC_OPENAI_API_KEY || '',
+        organization: process.env.EXPO_PUBLIC_OPENAI_ORGANIZATION || '',
       }),
     []
   );

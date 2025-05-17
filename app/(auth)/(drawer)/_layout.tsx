@@ -24,6 +24,8 @@ import { Chat } from '@/utils/Interfaces';
 import * as ContextMenu from 'zeego/context-menu';
 import { useRevenueCat } from '@/providers/RevenueCat';
 import { Keyboard } from 'react-native';
+import { useClerk } from '@clerk/clerk-expo';
+
 
 export const CustomDrawerContent = (props: any) => {
   const { bottom, top } = useSafeAreaInsets();
@@ -31,6 +33,7 @@ export const CustomDrawerContent = (props: any) => {
   const isDrawerOpen = useDrawerStatus() === 'open';
   const [history, setHistory] = useState<Chat[]>([]);
   const router = useRouter();
+    const { user: authUser } = useClerk();
 
   useEffect(() => {
     loadChats();
@@ -137,10 +140,10 @@ export const CustomDrawerContent = (props: any) => {
         <Link href="/(auth)/(modal)/settings" asChild>
           <TouchableOpacity style={styles.footer}>
             <Image
-              source={{ uri: 'https://galaxies.dev/img/meerkat_2.jpg' }}
+              source={require('@/assets/images/user.png')}
               style={styles.avatar}
             />
-            <Text style={styles.userName}>Mika Meerkat</Text>
+            <Text style={styles.userName}>{authUser?.primaryEmailAddress?.emailAddress}</Text>
             <Ionicons name="ellipsis-horizontal" size={24} color={Colors.greyLight} />
           </TouchableOpacity>
         </Link>
@@ -182,7 +185,7 @@ const Layout = () => {
         name="(chat)/new"
         getId={() => Math.random().toString()}
         options={{
-          title: 'ChatGPT',
+          title: 'DanGPT',
           drawerIcon: () => (
             <View style={[styles.item, { backgroundColor: '#000' }]}>
               <Image source={require('@/assets/images/logo-white.png')} style={styles.btnImage} />
@@ -303,10 +306,11 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 10,
+    backgroundColor: '#D3D3D3',
   },
   userName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
     flex: 1,
   },
   item: {
@@ -314,9 +318,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   btnImage: {
-    margin: 6,
-    width: 16,
-    height: 16,
+    margin: 0,
+    width: 28,
+    height: 28,
   },
   dallEImage: {
     width: 28,

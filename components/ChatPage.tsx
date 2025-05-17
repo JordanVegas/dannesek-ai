@@ -1,35 +1,26 @@
 import HeaderDropDown from '@/components/HeaderDropDown';
 import MessageInput from '@/components/MessageInput';
 import { defaultStyles } from '@/constants/Styles';
-import { keyStorage, storage } from '@/utils/Storage';
 import { Redirect, Stack, useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Image, View, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
-import { useMMKVString } from 'react-native-mmkv';
-import OpenAI from 'react-native-openai';
+import { useEffect, useRef, useState } from 'react';
+import { Image, View, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import ChatMessage from '@/components/ChatMessage';
 import { Message, Role } from '@/utils/Interfaces';
 import MessageIdeas from '@/components/MessageIdeas';
 import { addChat, addMessage, getMessages } from '@/utils/Database';
 import { useSQLiteContext } from 'expo-sqlite/next';
+import { talkToAssistant } from '@/utils/assistantApi'; // Assistant API
 
 const ChatPage = () => {
-  const [gptVersion, setGptVersion] = useMMKVString('gptVersion', storage);
+  const [gptVersion, setGptVersion] = useState('4'); // Default to GPT-4
   const [height, setHeight] = useState(0);
-  const [key, setKey] = useMMKVString('apikey', keyStorage);
-  const [organization, setOrganization] = useMMKVString('org', keyStorage);
   const [messages, setMessages] = useState<Message[]>([]);
   const db = useSQLiteContext();
-  let { id } = useLocalSearchParams<{ id: string }>();
-
-  if (!key || key === '' || !organization || organization === '') {
-    return <Redirect href={'/(auth)/(modal)/settings'} />;
-  }
+  const { id } = useLocalSearchParams<{ id: string }>();
 
   const [chatId, _setChatId] = useState(id);
   const chatIdRef = useRef(chatId);
-  // https://stackoverflow.com/questions/55265255/react-usestate-hook-event-handler-using-initial-state
   function setChatId(id: string) {
     chatIdRef.current = id;
     _setChatId(id);
@@ -43,42 +34,6 @@ const ChatPage = () => {
     }
   }, [id]);
 
-  const openAI = useMemo(
-    () =>
-      new OpenAI({
-        apiKey: key,
-        organization,
-      }),
-    []
-  );
-
-  useEffect(() => {
-    const handleNewMessage = (payload: any) => {
-      setMessages((messages) => {
-        const newMessage = payload.choices[0]?.delta.content;
-        if (newMessage) {
-          messages[messages.length - 1].content += newMessage;
-          return [...messages];
-        }
-        if (payload.choices[0]?.finishReason) {
-          // save the last message
-
-          addMessage(db, parseInt(chatIdRef.current), {
-            content: messages[messages.length - 1].content,
-            role: Role.Bot,
-          });
-        }
-        return messages;
-      });
-    };
-
-    openAI.chat.addListener('onChatMessageReceived', handleNewMessage);
-
-    return () => {
-      openAI.chat.removeListener('onChatMessageReceived');
-    };
-  }, [openAI]);
-
   const onGptVersionChange = (version: string) => {
     setGptVersion(version);
   };
@@ -89,24 +44,37 @@ const ChatPage = () => {
   };
 
   const getCompletion = async (text: string) => {
+    // Show user and placeholder assistant message
+    setMessages((prev) => [
+      ...prev,
+      { role: Role.User, content: text },
+      { role: Role.Bot, content: '...' },
+    ]);
+
+    // Save chat title and user message if it's a new chat
     if (messages.length === 0) {
-      addChat(db, text).then((res) => {
-        const chatID = res.lastInsertRowId;
-        setChatId(chatID.toString());
-        addMessage(db, chatID, { content: text, role: Role.User });
-      });
+      const res = await addChat(db, text);
+      const newChatId = res.lastInsertRowId;
+      setChatId(newChatId.toString());
+      await addMessage(db, newChatId, { content: text, role: Role.User });
+    } else {
+      await addMessage(db, parseInt(chatIdRef.current), { content: text, role: Role.User });
     }
 
-    setMessages([...messages, { role: Role.User, content: text }, { role: Role.Bot, content: '' }]);
-    messages.push();
-    openAI.chat.stream({
-      messages: [
-        {
-          role: 'user',
-          content: text,
-        },
-      ],
-      model: gptVersion == '4' ? 'gpt-4' : 'gpt-3.5-turbo',
+    // Get assistant response
+    const reply = await talkToAssistant(text);
+
+    // Update UI
+    setMessages((prev) => {
+      const updated = [...prev];
+      updated[updated.length - 1] = { role: Role.Bot, content: reply };
+      return updated;
+    });
+
+    // Save assistant reply
+    await addMessage(db, parseInt(chatIdRef.current), {
+      content: reply,
+      role: Role.Bot,
     });
   };
 
@@ -116,7 +84,7 @@ const ChatPage = () => {
         options={{
           headerTitle: () => (
             <HeaderDropDown
-              title="ChatGPT"
+              title="GPT"
               items={[
                 { key: '3.5', title: 'GPT-3.5', icon: 'bolt' },
                 { key: '4', title: 'GPT-4', icon: 'sparkles' },
@@ -150,7 +118,8 @@ const ChatPage = () => {
           bottom: 0,
           left: 0,
           width: '100%',
-        }}>
+        }}
+      >
         {messages.length === 0 && <MessageIdeas onSelectCard={getCompletion} />}
         <MessageInput onShouldSend={getCompletion} />
       </KeyboardAvoidingView>
@@ -169,12 +138,14 @@ const styles = StyleSheet.create({
     borderRadius: 50,
   },
   image: {
-    width: 30,
-    height: 30,
-    resizeMode: 'cover',
+    width: 50,
+    height: 50,
+    resizeMode: 'stretch',
+    borderRadius: 50,
   },
   page: {
     flex: 1,
   },
 });
+
 export default ChatPage;

@@ -58,10 +58,14 @@ const Login = () => {
         password,
       });
 
+      console.log(result);
+      
       // This indicates the user is signed in
       signupSetActive({ session: result.createdSessionId });
     } catch (err: any) {
       alert(err.errors[0].message);
+      console.log(err);
+      
     } finally {
       setLoading(false);
     }
