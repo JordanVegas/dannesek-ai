@@ -18,6 +18,8 @@ const ChatPage = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const db = useSQLiteContext();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const [isTyping, setIsTyping] = useState(false);
+
 
   const [chatId, _setChatId] = useState(id);
   const chatIdRef = useRef(chatId);
@@ -43,40 +45,52 @@ const ChatPage = () => {
     setHeight(height / 2);
   };
 
-  const getCompletion = async (text: string) => {
-    // Show user and placeholder assistant message
-    setMessages((prev) => [
-      ...prev,
-      { role: Role.User, content: text },
-      { role: Role.Bot, content: '...' },
-    ]);
+const getCompletion = async (text: string) => {
+  setMessages((prev) => [
+    ...prev,
+    { role: Role.User, content: text },
+    { role: Role.Bot, content: '' },
+  ]);
+  setIsTyping(true); // ✅ Start blinking indicator
 
-    // Save chat title and user message if it's a new chat
-    if (messages.length === 0) {
-      const res = await addChat(db, text);
-      const newChatId = res.lastInsertRowId;
-      setChatId(newChatId.toString());
-      await addMessage(db, newChatId, { content: text, role: Role.User });
-    } else {
-      await addMessage(db, parseInt(chatIdRef.current), { content: text, role: Role.User });
-    }
+  if (messages.length === 0) {
+    const res = await addChat(db, text);
+    const newChatId = res.lastInsertRowId;
+    setChatId(newChatId.toString());
+    await addMessage(db, newChatId, { content: text, role: Role.User });
+  } else {
+    await addMessage(db, parseInt(chatIdRef.current), { content: text, role: Role.User });
+  }
 
-    // Get assistant response
-    const reply = await talkToAssistant(text);
+  const reply = await talkToAssistant(text);
 
-    // Update UI
+  // Simulated fast typing
+  let i = 0;
+  const interval = setInterval(() => {
+    i += 3; // ✅ Type 3 characters at a time
     setMessages((prev) => {
       const updated = [...prev];
-      updated[updated.length - 1] = { role: Role.Bot, content: reply };
+      const botMsg = updated[updated.length - 1];
+      updated[updated.length - 1] = {
+        ...botMsg,
+        content: reply.slice(0, i),
+      };
       return updated;
     });
 
-    // Save assistant reply
-    await addMessage(db, parseInt(chatIdRef.current), {
-      content: reply,
-      role: Role.Bot,
-    });
-  };
+    if (i >= reply.length) {
+      clearInterval(interval);
+      setIsTyping(false); // ✅ Stop blinking
+    }
+  }, 5); // ✅ Fast typing (5ms between updates)
+
+  await addMessage(db, parseInt(chatIdRef.current), {
+    content: reply,
+    role: Role.Bot,
+  });
+};
+
+
 
   return (
     <View style={defaultStyles.pageContainer}>
@@ -108,6 +122,17 @@ const ChatPage = () => {
           contentContainerStyle={{ paddingTop: 30, paddingBottom: 150 }}
           keyboardDismissMode="on-drag"
         />
+        {isTyping && (
+  <View style={styles.typingContainer}>
+    <ChatMessage
+      role={Role.Bot}
+      content={
+        <TypingDots />
+      }
+    />
+  </View>
+)}
+
       </View>
 
       <KeyboardAvoidingView
@@ -128,6 +153,10 @@ const ChatPage = () => {
 };
 
 const styles = StyleSheet.create({
+  typingContainer: {
+  paddingHorizontal: 20,
+  paddingVertical: 5,
+},
   logoContainer: {
     alignSelf: 'center',
     alignItems: 'center',
