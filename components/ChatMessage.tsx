@@ -29,7 +29,7 @@ const ChatMessage = ({
           <Image source={require('@/assets/images/logo-white.png')} style={styles.btnImage} />
         </View>
       ) : (
-        <Image source={{ uri: 'https://galaxies.dev/img/meerkat_2.jpg' }} style={styles.avatar} />
+        <Image source={require('@/assets/images/user.png') } style={styles.avatar} />
       )}
 
       {loading ? (
@@ -86,15 +86,15 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   btnImage: {
-    margin: 6,
-    width: 16,
-    height: 16,
+    margin: 0,
+    width: 30,
+    height: 30,
   },
   avatar: {
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: '#000',
+    backgroundColor: '#E0E0E0',
   },
   text: {
     padding: 4,

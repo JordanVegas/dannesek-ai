@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Text } from 'react-native';
 
 export const TypingDots = () => {
@@ -11,5 +11,5 @@ export const TypingDots = () => {
     return () => clearInterval(interval);
   }, []);
 
-  return <Text>Typing{dots}</Text>;
+  return <Text>Thinking{dots}</Text>;
 };

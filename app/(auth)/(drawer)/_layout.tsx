@@ -1,6 +1,6 @@
 import { Drawer } from 'expo-router/drawer';
 import { DrawerContentScrollView, DrawerItemList, DrawerItem } from '@react-navigation/drawer';
-import { Link, useNavigation, useRouter } from 'expo-router';
+import { useNavigation, useRouter, Link } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Image,
@@ -11,6 +11,7 @@ import {
   useWindowDimensions,
   TextInput,
   Alert,
+  Keyboard,
 } from 'react-native';
 import Colors from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,9 +24,7 @@ import { useDrawerStatus } from '@react-navigation/drawer';
 import { Chat } from '@/utils/Interfaces';
 import * as ContextMenu from 'zeego/context-menu';
 import { useRevenueCat } from '@/providers/RevenueCat';
-import { Keyboard } from 'react-native';
 import { useClerk } from '@clerk/clerk-expo';
-
 
 export const CustomDrawerContent = (props: any) => {
   const { bottom, top } = useSafeAreaInsets();
@@ -33,7 +32,7 @@ export const CustomDrawerContent = (props: any) => {
   const isDrawerOpen = useDrawerStatus() === 'open';
   const [history, setHistory] = useState<Chat[]>([]);
   const router = useRouter();
-    const { user: authUser } = useClerk();
+  const { user: authUser } = useClerk();
 
   useEffect(() => {
     loadChats();
@@ -41,21 +40,16 @@ export const CustomDrawerContent = (props: any) => {
   }, [isDrawerOpen]);
 
   const loadChats = async () => {
-    // Load chats from SQLite
     const result = (await getChats(db)) as Chat[];
     setHistory(result);
   };
 
   const onDeleteChat = (chatId: number) => {
     Alert.alert('Delete Chat', 'Are you sure you want to delete this chat?', [
-      {
-        text: 'Cancel',
-        style: 'cancel',
-      },
+      { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
         onPress: async () => {
-          // Delete the chat
           await db.runAsync('DELETE FROM chats WHERE id = ?', chatId);
           loadChats();
         },
@@ -66,7 +60,6 @@ export const CustomDrawerContent = (props: any) => {
   const onRenameChat = (chatId: number) => {
     Alert.prompt('Rename Chat', 'Enter a new name for the chat', async (newName) => {
       if (newName) {
-        // Rename the chat
         await renameChat(db, chatId, newName);
         loadChats();
       }
@@ -107,42 +100,23 @@ export const CustomDrawerContent = (props: any) => {
                   </View>
                 )}
               </ContextMenu.Preview>
-
               <ContextMenu.Item key={'rename'} onSelect={() => onRenameChat(chat.id)}>
                 <ContextMenu.ItemTitle>Rename</ContextMenu.ItemTitle>
-                <ContextMenu.ItemIcon
-                  ios={{
-                    name: 'pencil',
-                    pointSize: 18,
-                  }}
-                />
+                <ContextMenu.ItemIcon ios={{ name: 'pencil', pointSize: 18 }} />
               </ContextMenu.Item>
               <ContextMenu.Item key={'delete'} onSelect={() => onDeleteChat(chat.id)} destructive>
                 <ContextMenu.ItemTitle>Delete</ContextMenu.ItemTitle>
-                <ContextMenu.ItemIcon
-                  ios={{
-                    name: 'trash',
-                    pointSize: 18,
-                  }}
-                />
+                <ContextMenu.ItemIcon ios={{ name: 'trash', pointSize: 18 }} />
               </ContextMenu.Item>
             </ContextMenu.Content>
           </ContextMenu.Root>
         ))}
       </DrawerContentScrollView>
 
-      <View
-        style={{
-          padding: 16,
-          paddingBottom: 10 + bottom,
-          backgroundColor: Colors.light,
-        }}>
+      <View style={{ padding: 16, paddingBottom: 10 + bottom, backgroundColor: Colors.light }}>
         <Link href="/(auth)/(modal)/settings" asChild>
           <TouchableOpacity style={styles.footer}>
-            <Image
-              source={require('@/assets/images/user.png')}
-              style={styles.avatar}
-            />
+            <Image source={require('@/assets/images/user.png')} style={styles.avatar} />
             <Text style={styles.userName}>{authUser?.primaryEmailAddress?.emailAddress}</Text>
             <Ionicons name="ellipsis-horizontal" size={24} color={Colors.greyLight} />
           </TouchableOpacity>
@@ -157,6 +131,16 @@ const Layout = () => {
   const dimensions = useWindowDimensions();
   const { user } = useRevenueCat();
   const router = useRouter();
+  const db = useSQLiteContext();
+
+  const handleNewChat = async () => {
+    const chats = await getChats(db);
+    if (chats.length > 5) {
+      Alert.alert('Limit Reached', 'You can only create up to 5 chats.');
+    } else {
+      router.push('/(auth)/(drawer)/(chat)/new');
+    }
+  };
 
   return (
     <Drawer
@@ -192,36 +176,30 @@ const Layout = () => {
             </View>
           ),
           headerRight: () => (
-            <Link href={'/(auth)/(drawer)/(chat)/new'} push asChild>
-              <TouchableOpacity>
-                <Ionicons
-                  name="create-outline"
-                  size={24}
-                  color={Colors.grey}
-                  style={{ marginRight: 16 }}
-                />
-              </TouchableOpacity>
-            </Link>
+            <TouchableOpacity onPress={handleNewChat}>
+              <Ionicons
+                name="create-outline"
+                size={24}
+                color={Colors.grey}
+                style={{ marginRight: 16 }}
+              />
+            </TouchableOpacity>
           ),
         }}
       />
       <Drawer.Screen
         name="(chat)/[id]"
         options={{
-          drawerItemStyle: {
-            display: 'none',
-          },
+          drawerItemStyle: { display: 'none' },
           headerRight: () => (
-            <Link href={'/(auth)/(drawer)/(chat)/new'} push asChild>
-              <TouchableOpacity>
-                <Ionicons
-                  name="create-outline"
-                  size={24}
-                  color={Colors.grey}
-                  style={{ marginRight: 16 }}
-                />
-              </TouchableOpacity>
-            </Link>
+            <TouchableOpacity onPress={handleNewChat}>
+              <Ionicons
+                name="create-outline"
+                size={24}
+                color={Colors.grey}
+                style={{ marginRight: 16 }}
+              />
+            </TouchableOpacity>
           ),
         }}
       />
@@ -252,16 +230,8 @@ const Layout = () => {
           title: 'Explore GPTs',
           drawerIcon: () => (
             <View
-              style={[
-                styles.item,
-                {
-                  backgroundColor: '#fff',
-                  width: 28,
-                  height: 28,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                },
-              ]}>
+              style={[styles.item, { backgroundColor: '#fff', width: 28, height: 28, alignItems: 'center', justifyContent: 'center' }]}
+            >
               <Ionicons name="apps-outline" size={18} color="#000" />
             </View>
           ),
@@ -281,9 +251,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.input,
   },
-  searchIcon: {
-    padding: 6,
-  },
+  searchIcon: { padding: 6 },
   input: {
     flex: 1,
     paddingTop: 8,
@@ -297,10 +265,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-  },
-  roundImage: {
-    width: 30,
-    height: 30,
   },
   avatar: {
     width: 40,
@@ -318,7 +282,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   btnImage: {
-    margin: 0,
     width: 28,
     height: 28,
   },
