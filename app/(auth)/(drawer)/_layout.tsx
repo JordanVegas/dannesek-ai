@@ -84,7 +84,7 @@ export const CustomDrawerContent = (props: any) => {
       <DrawerContentScrollView
         {...props}
         contentContainerStyle={{ backgroundColor: '#fff', paddingTop: 0 }}>
-        <DrawerItemList {...props} />
+        {/* <DrawerItemList {...props} /> */}
         {history.map((chat) => (
           <ContextMenu.Root key={chat.id}>
             <ContextMenu.Trigger>
@@ -164,7 +164,7 @@ const handleNewChat = async () => {
         drawerLabelStyle: { marginLeft: -20 },
         drawerStyle: { width: dimensions.width * 0.86 },
       }}>
-      <Drawer.Screen
+      {/* <Drawer.Screen
         name="(chat)/new"
         getId={() => Math.random().toString()}
         options={{
@@ -185,7 +185,7 @@ const handleNewChat = async () => {
             </TouchableOpacity>
           ),
         }}
-      />
+      /> */}
       <Drawer.Screen
         name="(chat)/[id]"
         options={{
@@ -202,7 +202,7 @@ const handleNewChat = async () => {
           ),
         }}
       />
-      <Drawer.Screen
+      {/* <Drawer.Screen
         name="dalle"
         options={{
           title: 'Dall·E',
@@ -222,8 +222,8 @@ const handleNewChat = async () => {
             }
           },
         }}
-      />
-      <Drawer.Screen
+      /> */}
+      {/* <Drawer.Screen
         name="explore"
         options={{
           title: 'Explore GPTs',
@@ -235,7 +235,7 @@ const handleNewChat = async () => {
             </View>
           ),
         }}
-      />
+      /> */}
     </Drawer>
   );
 };
