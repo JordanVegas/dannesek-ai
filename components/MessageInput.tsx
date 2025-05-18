@@ -86,54 +86,58 @@ const onImagePick = async () => {
 
 
   return (
-    <BlurView intensity={90} tint="extraLight" style={{ paddingBottom: bottom, paddingTop: 10 }}>
-      <View style={styles.row}>
-        <ATouchableOpacity onPress={expandItems} style={[styles.roundBtn, expandButtonStyle]}>
-          <Ionicons name="add" size={24} color={Colors.grey} />
-        </ATouchableOpacity>
-
-        <Animated.View style={[styles.buttonView, buttonViewStyle]}>
-          <TouchableOpacity onPress={() => ImagePicker.launchCameraAsync()}>
-            <Ionicons name="camera-outline" size={24} color={Colors.grey} />
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={onImagePick}>
-            <Ionicons name="image-outline" size={24} color={Colors.grey} />
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => DocumentPicker.getDocumentAsync()}>
-            <Ionicons name="folder-outline" size={24} color={Colors.grey} />
-          </TouchableOpacity>
-        </Animated.View>
-{attachedImage && (
-  <View style={styles.attachmentPreview}>
-    <Image source={{ uri: attachedImage }} style={styles.previewImage} />
-    <TouchableOpacity onPress={() => setAttachedImage(null)} style={styles.removeButton}>
-      <Ionicons name="close-circle" size={20} color={Colors.grey} />
-    </TouchableOpacity>
-  </View>
-)}
-
-        <TextInput
-          autoFocus
-          ref={inputRef}
-          placeholder="Message"
-          style={styles.messageInput}
-          onFocus={collapseItems}
-          onChangeText={onChangeText}
-          value={message}
-          multiline
-        />
-
-        <TouchableOpacity onPress={onSend} disabled={message.trim().length === 0}>
-          <Ionicons
-            name="arrow-up-circle"
-            size={24}
-            color={message.trim().length > 0 ? Colors.grey : Colors.greyLight}
-          />
+<BlurView intensity={90} tint="extraLight" style={{ paddingBottom: bottom, paddingTop: 10 }}>
+  {attachedImage && (
+    <View style={styles.attachmentPreviewContainer}>
+      <View style={styles.attachmentPreview}>
+        <Image source={{ uri: attachedImage }} style={styles.previewImage} />
+        <TouchableOpacity onPress={() => setAttachedImage(null)} style={styles.removeButton}>
+          <Ionicons name="close-circle" size={20} color={Colors.grey} />
         </TouchableOpacity>
       </View>
-    </BlurView>
+    </View>
+  )}
+
+  <View style={styles.row}>
+    <ATouchableOpacity onPress={expandItems} style={[styles.roundBtn, expandButtonStyle]}>
+      <Ionicons name="add" size={24} color={Colors.grey} />
+    </ATouchableOpacity>
+
+    <Animated.View style={[styles.buttonView, buttonViewStyle]}>
+      <TouchableOpacity onPress={() => ImagePicker.launchCameraAsync()}>
+        <Ionicons name="camera-outline" size={24} color={Colors.grey} />
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={onImagePick}>
+        <Ionicons name="image-outline" size={24} color={Colors.grey} />
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => DocumentPicker.getDocumentAsync()}>
+        <Ionicons name="folder-outline" size={24} color={Colors.grey} />
+      </TouchableOpacity>
+    </Animated.View>
+
+    <TextInput
+      autoFocus
+      ref={inputRef}
+      placeholder="Message"
+      style={styles.messageInput}
+      onFocus={collapseItems}
+      onChangeText={onChangeText}
+      value={message}
+      multiline
+    />
+
+    <TouchableOpacity onPress={onSend} disabled={message.trim().length === 0 && !attachedImage}>
+      <Ionicons
+        name="arrow-up-circle"
+        size={24}
+        color={(message.trim().length > 0 || attachedImage) ? Colors.grey : Colors.greyLight}
+      />
+    </TouchableOpacity>
+  </View>
+</BlurView>
+
   );
 };
 
@@ -165,10 +169,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  attachmentPreview: {
+attachmentPreviewContainer: {
+  paddingHorizontal: 20,
+  paddingBottom: 8,
+},
+attachmentPreview: {
   flexDirection: 'row',
   alignItems: 'center',
-  marginBottom: 8,
 },
 previewImage: {
   width: 60,

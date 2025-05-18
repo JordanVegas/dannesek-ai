@@ -5,10 +5,10 @@ export enum Role {
 
 export interface Message {
   role: Role;
-  content: string;
+  content: string | React.ReactNode;
   imageUrl?: string;
-  prompt?: string;
 }
+
 
 export interface Chat {
   id: number;
