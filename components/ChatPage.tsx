@@ -43,6 +43,8 @@ const ChatPage = () => {
   }
 
   const [chatName, setChatName] = useState(params.name || '');
+  console.log('chatName', params);
+  
   const [showNameModal, setShowNameModal] = useState(false);
 
   useEffect(() => {
@@ -71,6 +73,8 @@ const ChatPage = () => {
 
       if (chatRow?.title === 'New Chat') {
         setShowNameModal(true);
+      } else {
+        setChatName(chatRow?.title || 'Chat');
       }
 
       const msgs = await getMessages(db, numericId);

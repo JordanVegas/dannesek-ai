@@ -13,6 +13,7 @@ export default {
   grey: '#242026',
   greyLight: '#B8B3BA',
   input: '#EEE9F0',
-  selected: '#F7F2F9',
+  selected: '#E0E0E0',
+  new: '#F7F2F9',
   dark: '#2F2D32',
 };

@@ -2,9 +2,9 @@ import Colors from '@/constants/Colors';
 import { Text, ScrollView, TouchableOpacity, StyleSheet, View } from 'react-native';
 
 const PredefinedMessages = [
-  { title: 'Explain React Native', text: "like I'm five years old" },
-  { title: 'Suggest fun activites', text: 'for a family visting San Francisco' },
-  { title: 'Recommend a dish', text: "to impress a date who's a picky eater" },
+  { title: 'Suggest good openers', text: "for Whatsapp" },
+  { title: 'What should i reply', text: 'to a sunset story' },
+  { title: 'What is the best way', text: "to learn from Dan" },
 ];
 
 type Props = {
