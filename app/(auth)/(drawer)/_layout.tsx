@@ -135,11 +135,11 @@ const Layout = () => {
 
   const handleNewChat = async () => {
     const chats = await getChats(db);
-    if (chats.length > 5) {
+    if (chats.length > 50000) {
       Alert.alert('Limit Reached', 'You can only create up to 5 chats.');
     } else {
       router.push('/(auth)/(drawer)/(chat)/new');
-    }
+    }``
   };
 
   return (

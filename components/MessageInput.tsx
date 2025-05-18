@@ -10,7 +10,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { FontAwesome5 } from '@expo/vector-icons';
 import { useRef, useState } from 'react';
 import { BlurView } from 'expo-blur';
 import * as DocumentPicker from 'expo-document-picker';
@@ -19,7 +18,7 @@ import * as ImagePicker from 'expo-image-picker';
 const ATouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 export type Props = {
-  onShouldSend: (message: string) => void;
+  onShouldSend: (message: string, imageUri?: string) => void;
 };
 
 const MessageInput = ({ onShouldSend }: Props) => {
@@ -60,12 +59,21 @@ const MessageInput = ({ onShouldSend }: Props) => {
   };
 
   const onSend = () => {
-    onShouldSend(message);
+    onShouldSend(message.trim());
     setMessage('');
   };
 
-  const onSelectCard = (text: string) => {
-    onShouldSend(text);
+  const onImagePick = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: false,
+      quality: 1,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const imageUri = result.assets[0].uri;
+      onShouldSend('Here is the image:', imageUri); // Send message with image
+    }
   };
 
   return (
@@ -79,9 +87,11 @@ const MessageInput = ({ onShouldSend }: Props) => {
           <TouchableOpacity onPress={() => ImagePicker.launchCameraAsync()}>
             <Ionicons name="camera-outline" size={24} color={Colors.grey} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => ImagePicker.launchImageLibraryAsync()}>
+
+          <TouchableOpacity onPress={onImagePick}>
             <Ionicons name="image-outline" size={24} color={Colors.grey} />
           </TouchableOpacity>
+
           <TouchableOpacity onPress={() => DocumentPicker.getDocumentAsync()}>
             <Ionicons name="folder-outline" size={24} color={Colors.grey} />
           </TouchableOpacity>
@@ -97,15 +107,14 @@ const MessageInput = ({ onShouldSend }: Props) => {
           value={message}
           multiline
         />
-        {message.length > 0 ? (
-          <TouchableOpacity onPress={onSend}>
-            <Ionicons name="arrow-up-circle" size={24} color={Colors.grey} />
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity>
-            <FontAwesome5 name="headphones" size={24} color={Colors.grey} />
-          </TouchableOpacity>
-        )}
+
+        <TouchableOpacity onPress={onSend} disabled={message.trim().length === 0}>
+          <Ionicons
+            name="arrow-up-circle"
+            size={24}
+            color={message.trim().length > 0 ? Colors.grey : Colors.greyLight}
+          />
+        </TouchableOpacity>
       </View>
     </BlurView>
   );
@@ -140,4 +149,5 @@ const styles = StyleSheet.create({
     gap: 12,
   },
 });
+
 export default MessageInput;

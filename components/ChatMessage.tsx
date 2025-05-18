@@ -2,7 +2,14 @@ import Colors from '@/constants/Colors';
 import { copyImageToClipboard, downloadAndSaveImage, shareImage } from '@/utils/Image';
 import { Message, Role } from '@/utils/Interfaces';
 import { Link } from 'expo-router';
-import { View, Text, StyleSheet, Image, ActivityIndicator, Pressable } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  ActivityIndicator,
+  Pressable,
+} from 'react-native';
 import * as ContextMenu from 'zeego/context-menu';
 
 const ChatMessage = ({
@@ -11,16 +18,30 @@ const ChatMessage = ({
   imageUrl,
   prompt,
   loading,
-}: Message & { loading?: boolean }) => {
+}: Message & { imageUrl?: string; prompt?: string; loading?: boolean }) => {
   const contextItems = [
-    { title: 'Copy', systemIcon: 'doc.on.doc', action: () => copyImageToClipboard(imageUrl!) },
+    {
+      title: 'Copy',
+      systemIcon: 'doc.on.doc',
+      action: () => imageUrl && copyImageToClipboard(imageUrl),
+    },
     {
       title: 'Save to Photos',
       systemIcon: 'arrow.down.to.line',
-      action: () => downloadAndSaveImage(imageUrl!),
+      action: () => imageUrl && downloadAndSaveImage(imageUrl),
     },
-    { title: 'Share', systemIcon: 'square.and.arrow.up', action: () => shareImage(imageUrl!) },
+    {
+      title: 'Share',
+      systemIcon: 'square.and.arrow.up',
+      action: () => imageUrl && shareImage(imageUrl),
+    },
   ];
+
+  const isImageOnly = typeof content === 'string' && content.trim() === '' && imageUrl;
+  const imageCaption =
+    typeof content === 'string' && content.startsWith('[Image]:')
+      ? content.replace('[Image]:', '').trim()
+      : null;
 
   return (
     <View style={styles.row}>
@@ -29,7 +50,7 @@ const ChatMessage = ({
           <Image source={require('@/assets/images/logo-white.png')} style={styles.btnImage} />
         </View>
       ) : (
-        <Image source={require('@/assets/images/user.png') } style={styles.avatar} />
+        <Image source={require('@/assets/images/user.png')} style={styles.avatar} />
       )}
 
       {loading ? (
@@ -37,22 +58,23 @@ const ChatMessage = ({
           <ActivityIndicator color={Colors.primary} size="small" />
         </View>
       ) : (
-        <>
-          {content === '' && imageUrl ? (
+        <View style={{ flexShrink: 1 }}>
+          {imageUrl && (
             <ContextMenu.Root>
               <ContextMenu.Trigger>
                 <Link
                   href={`/(auth)/(modal)/image/${encodeURIComponent(
                     imageUrl
-                  )}?prompt=${encodeURIComponent(prompt!)}`}
-                  asChild>
+                  )}?prompt=${encodeURIComponent(prompt || '')}`}
+                  asChild
+                >
                   <Pressable>
                     <Image source={{ uri: imageUrl }} style={styles.previewImage} />
                   </Pressable>
                 </Link>
               </ContextMenu.Trigger>
               <ContextMenu.Content>
-                {contextItems.map((item, index) => (
+                {contextItems.map((item) => (
                   <ContextMenu.Item key={item.title} onSelect={item.action}>
                     <ContextMenu.ItemTitle>{item.title}</ContextMenu.ItemTitle>
                     <ContextMenu.ItemIcon
@@ -65,14 +87,23 @@ const ChatMessage = ({
                 ))}
               </ContextMenu.Content>
             </ContextMenu.Root>
-          ) : (
+          )}
+
+          {typeof content === 'string' && imageCaption && (
+            <Text style={styles.caption}>{imageCaption}</Text>
+          )}
+
+          {!imageUrl && typeof content === 'string' && (
             <Text style={styles.text}>{content}</Text>
           )}
-        </>
+
+          {!imageUrl && typeof content !== 'string' && content}
+        </View>
       )}
     </View>
   );
 };
+
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
@@ -102,6 +133,12 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     flex: 1,
   },
+  caption: {
+    fontSize: 14,
+    marginTop: 6,
+    color: Colors.grey,
+    flexWrap: 'wrap',
+  },
   previewImage: {
     width: 240,
     height: 240,
@@ -113,4 +150,5 @@ const styles = StyleSheet.create({
     marginLeft: 14,
   },
 });
+
 export default ChatMessage;
