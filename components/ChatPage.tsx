@@ -176,22 +176,13 @@ const ChatPage = () => {
           </View>
         </Modal>
       )}
+<Stack.Screen
+  options={{
+    headerTitle: chatName || 'Chat',
+    headerTitleAlign: 'center',
+  }}
+/>
 
-      <Stack.Screen
-        options={{
-          headerTitle: () => (
-            <HeaderDropDown
-              title="GPT"
-              items={[
-                { key: '3.5', title: 'GPT-3.5', icon: 'bolt' },
-                { key: '4', title: 'GPT-4', icon: 'sparkles' },
-              ]}
-              onSelect={onGptVersionChange}
-              selected={gptVersion}
-            />
-          ),
-        }}
-      />
 
       <View style={styles.page} onLayout={onLayout}>
         {messages.length === 0 && (

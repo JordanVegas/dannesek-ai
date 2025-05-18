@@ -1,5 +1,7 @@
 import { Drawer } from 'expo-router/drawer';
-import { DrawerContentScrollView, DrawerItemList, DrawerItem } from '@react-navigation/drawer';
+import {
+  DrawerContentScrollView,
+} from '@react-navigation/drawer';
 import { useNavigation, useRouter, Link } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -12,6 +14,7 @@ import {
   TextInput,
   Alert,
   Keyboard,
+  Modal,
 } from 'react-native';
 import Colors from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
@@ -31,6 +34,10 @@ export const CustomDrawerContent = (props: any) => {
   const db = useSQLiteContext();
   const isDrawerOpen = useDrawerStatus() === 'open';
   const [history, setHistory] = useState<Chat[]>([]);
+  const [search, setSearch] = useState('');
+  const [renameModalVisible, setRenameModalVisible] = useState(false);
+  const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
+  const [newTitle, setNewTitle] = useState('');
   const router = useRouter();
   const { user: authUser } = useClerk();
 
@@ -41,8 +48,6 @@ export const CustomDrawerContent = (props: any) => {
 
   const loadChats = async () => {
     const result = (await getChats(db)) as Chat[];
-    console.log('Loaded chats:', result);
-    
     setHistory(result);
   };
 
@@ -60,13 +65,15 @@ export const CustomDrawerContent = (props: any) => {
   };
 
   const onRenameChat = (chatId: number) => {
-    Alert.prompt('Rename Chat', 'Enter a new name for the chat', async (newName) => {
-      if (newName) {
-        await renameChat(db, chatId, newName);
-        loadChats();
-      }
-    });
+    setSelectedChatId(chatId);
+    const chat = history.find((c) => c.id === chatId);
+    setNewTitle(chat?.title || '');
+    setRenameModalVisible(true);
   };
+
+  const filteredHistory = history.filter(chat =>
+    chat.title.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <View style={{ flex: 1, marginTop: top }}>
@@ -76,23 +83,26 @@ export const CustomDrawerContent = (props: any) => {
           <TextInput
             style={styles.input}
             placeholder="Search"
+            value={search}
+            onChangeText={setSearch}
             underlineColorAndroid="transparent"
           />
         </View>
+        <TouchableOpacity onPress={() => router.push('/(auth)/(drawer)/(chat)/new')} style={styles.newChatBtn}>
+          <Text style={styles.newChatText}>+ New Chat</Text>
+        </TouchableOpacity>
       </View>
 
-      <DrawerContentScrollView
-        {...props}
-        contentContainerStyle={{ backgroundColor: '#fff', paddingTop: 0 }}>
-        {/* <DrawerItemList {...props} /> */}
-        {history.map((chat) => (
+      <DrawerContentScrollView {...props} contentContainerStyle={{ backgroundColor: '#fff', paddingTop: 0 }}>
+        {filteredHistory.map((chat) => (
           <ContextMenu.Root key={chat.id}>
             <ContextMenu.Trigger>
-              <DrawerItem
-                label={chat.title}
+              <TouchableOpacity
                 onPress={() => router.push(`/(auth)/(drawer)/(chat)/${chat.id}`)}
-                inactiveTintColor="#000"
-              />
+                style={styles.drawerItem}
+              >
+                <Text style={styles.drawerLabel}>{chat.title}</Text>
+              </TouchableOpacity>
             </ContextMenu.Trigger>
             <ContextMenu.Content>
               <ContextMenu.Preview>
@@ -119,11 +129,51 @@ export const CustomDrawerContent = (props: any) => {
         <Link href="/(auth)/(modal)/settings" asChild>
           <TouchableOpacity style={styles.footer}>
             <Image source={require('@/assets/images/user.png')} style={styles.avatar} />
-            <Text style={styles.userName}>{authUser?.primaryEmailAddress?.emailAddress}</Text>
+            <Text style={styles.userName}>
+              {authUser?.primaryEmailAddress?.emailAddress ?? 'Guest'}
+            </Text>
             <Ionicons name="ellipsis-horizontal" size={24} color={Colors.greyLight} />
           </TouchableOpacity>
         </Link>
       </View>
+
+      {renameModalVisible && (
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={renameModalVisible}
+          onRequestClose={() => setRenameModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Rename Chat</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={newTitle}
+                onChangeText={setNewTitle}
+                placeholder="Enter new title"
+              />
+              <View style={styles.modalActions}>
+                <TouchableOpacity onPress={() => setRenameModalVisible(false)} style={styles.modalButton}>
+                  <Text>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={async () => {
+                    if (selectedChatId && newTitle.trim()) {
+                      await renameChat(db, selectedChatId, newTitle.trim());
+                      setRenameModalVisible(false);
+                      loadChats();
+                    }
+                  }}
+                  style={[styles.modalButton, { backgroundColor: Colors.selected }]}
+                >
+                  <Text style={{ fontWeight: 'bold' }}>Save</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 };
@@ -133,13 +183,10 @@ const Layout = () => {
   const dimensions = useWindowDimensions();
   const { user } = useRevenueCat();
   const router = useRouter();
-  const db = useSQLiteContext();
 
-const handleNewChat = async () => {
-  router.push('/(auth)/(drawer)/(chat)/new');
-};
-
-
+  const handleNewChat = async () => {
+    router.push('/(auth)/(drawer)/(chat)/new');
+  };
 
   return (
     <Drawer
@@ -148,7 +195,8 @@ const handleNewChat = async () => {
         headerLeft: () => (
           <TouchableOpacity
             onPress={() => navigation.dispatch(DrawerActions.toggleDrawer)}
-            style={{ marginLeft: 16 }}>
+            style={{ marginLeft: 16 }}
+          >
             <FontAwesome6 name="grip-lines" size={20} color={Colors.grey} />
           </TouchableOpacity>
         ),
@@ -163,79 +211,19 @@ const handleNewChat = async () => {
         drawerItemStyle: { borderRadius: 12 },
         drawerLabelStyle: { marginLeft: -20 },
         drawerStyle: { width: dimensions.width * 0.86 },
-      }}>
-      {/* <Drawer.Screen
-        name="(chat)/new"
-        getId={() => Math.random().toString()}
-        options={{
-          title: 'DanGPT',
-          drawerIcon: () => (
-            <View style={[styles.item, { backgroundColor: '#000' }]}>
-              <Image source={require('@/assets/images/logo-white.png')} style={styles.btnImage} />
-            </View>
-          ),
-          headerRight: () => (
-            <TouchableOpacity onPress={handleNewChat}>
-              <Ionicons
-                name="create-outline"
-                size={24}
-                color={Colors.grey}
-                style={{ marginRight: 16 }}
-              />
-            </TouchableOpacity>
-          ),
-        }}
-      /> */}
+      }}
+    >
       <Drawer.Screen
         name="(chat)/[id]"
         options={{
           drawerItemStyle: { display: 'none' },
           headerRight: () => (
             <TouchableOpacity onPress={handleNewChat}>
-              <Ionicons
-                name="create-outline"
-                size={24}
-                color={Colors.grey}
-                style={{ marginRight: 16 }}
-              />
+              <Ionicons name="create-outline" size={24} color={Colors.grey} style={{ marginRight: 16 }} />
             </TouchableOpacity>
           ),
         }}
       />
-      {/* <Drawer.Screen
-        name="dalle"
-        options={{
-          title: 'Dall·E',
-          drawerIcon: () => (
-            <View style={[styles.item, { backgroundColor: '#000' }]}>
-              <Image source={require('@/assets/images/dalle.png')} style={styles.dallEImage} />
-            </View>
-          ),
-        }}
-        listeners={{
-          drawerItemPress: (e) => {
-            e.preventDefault();
-            if (!user.dalle) {
-              router.navigate('/(auth)/(modal)/purchase');
-            } else {
-              router.navigate('/(auth)/dalle');
-            }
-          },
-        }}
-      /> */}
-      {/* <Drawer.Screen
-        name="explore"
-        options={{
-          title: 'Explore GPTs',
-          drawerIcon: () => (
-            <View
-              style={[styles.item, { backgroundColor: '#fff', width: 28, height: 28, alignItems: 'center', justifyContent: 'center' }]}
-            >
-              <Ionicons name="apps-outline" size={18} color="#000" />
-            </View>
-          ),
-        }}
-      /> */}
     </Drawer>
   );
 };
@@ -260,6 +248,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     color: '#424242',
   },
+  newChatBtn: {
+    marginHorizontal: 16,
+    marginTop: 10,
+    marginBottom: 5,
+    padding: 10,
+    backgroundColor: Colors.selected,
+    borderRadius: 8,
+  },
+  newChatText: {
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#000',
+  },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -276,18 +277,52 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     flex: 1,
   },
-  item: {
-    borderRadius: 15,
-    overflow: 'hidden',
+  drawerItem: {
+    padding: 12,
+    paddingLeft: 20,
+    borderRadius: 10,
+    marginVertical: 4,
+    marginHorizontal: 10,
+    backgroundColor: '#f8f8f8',
   },
-  btnImage: {
-    width: 28,
-    height: 28,
+  drawerLabel: {
+    fontSize: 16,
+    color: '#000',
   },
-  dallEImage: {
-    width: 28,
-    height: 28,
-    resizeMode: 'cover',
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '80%',
+    padding: 20,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 6,
+    padding: 10,
+    marginBottom: 15,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+  },
+  modalButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    backgroundColor: '#eee',
   },
 });
 
