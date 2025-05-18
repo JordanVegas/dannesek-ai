@@ -16,32 +16,64 @@ const ChatMessage = ({
   content,
   role,
   imageUrl,
+  imageUrls,
   prompt,
   loading,
-}: Message & { imageUrl?: string; prompt?: string; loading?: boolean }) => {
-  const contextItems = [
-    {
-      title: 'Copy',
-      systemIcon: 'doc.on.doc',
-      action: () => imageUrl && copyImageToClipboard(imageUrl),
-    },
-    {
-      title: 'Save to Photos',
-      systemIcon: 'arrow.down.to.line',
-      action: () => imageUrl && downloadAndSaveImage(imageUrl),
-    },
-    {
-      title: 'Share',
-      systemIcon: 'square.and.arrow.up',
-      action: () => imageUrl && shareImage(imageUrl),
-    },
-  ];
+}: Message & {
+  imageUrl?: string;
+  imageUrls?: string[];
+  prompt?: string;
+  loading?: boolean;
+}) => {
+  const renderImage = (uri: string, index: number) => {
+    const contextItems = [
+      {
+        title: 'Copy',
+        systemIcon: 'doc.on.doc',
+        action: () => copyImageToClipboard(uri),
+      },
+      {
+        title: 'Save to Photos',
+        systemIcon: 'arrow.down.to.line',
+        action: () => downloadAndSaveImage(uri),
+      },
+      {
+        title: 'Share',
+        systemIcon: 'square.and.arrow.up',
+        action: () => shareImage(uri),
+      },
+    ];
 
-  const isImageOnly = typeof content === 'string' && content.trim() === '' && imageUrl;
-  const imageCaption =
-    typeof content === 'string' && content.startsWith('[Image]:')
-      ? content.replace('[Image]:', '').trim()
-      : null;
+    return (
+      <ContextMenu.Root key={index}>
+        <ContextMenu.Trigger>
+          <Link
+            href={`/(auth)/(modal)/image/${encodeURIComponent(uri)}?prompt=${encodeURIComponent(
+              prompt || ''
+            )}`}
+            asChild
+          >
+            <Pressable>
+              <Image source={{ uri }} style={styles.previewImage} />
+            </Pressable>
+          </Link>
+        </ContextMenu.Trigger>
+        <ContextMenu.Content>
+          {contextItems.map((item) => (
+            <ContextMenu.Item key={item.title} onSelect={item.action}>
+              <ContextMenu.ItemTitle>{item.title}</ContextMenu.ItemTitle>
+              <ContextMenu.ItemIcon
+                ios={{
+                  name: item.systemIcon,
+                  pointSize: 18,
+                }}
+              />
+            </ContextMenu.Item>
+          ))}
+        </ContextMenu.Content>
+      </ContextMenu.Root>
+    );
+  };
 
   return (
     <View style={styles.row}>
@@ -59,39 +91,20 @@ const ChatMessage = ({
         </View>
       ) : (
         <View style={{ flexShrink: 1 }}>
-          {imageUrl && (
-            <ContextMenu.Root>
-              <ContextMenu.Trigger>
-                <Link
-                  href={`/(auth)/(modal)/image/${encodeURIComponent(
-                    imageUrl
-                  )}?prompt=${encodeURIComponent(prompt || '')}`}
-                  asChild
-                >
-                  <Pressable>
-                    <Image source={{ uri: imageUrl }} style={styles.previewImage} />
-                  </Pressable>
-                </Link>
-              </ContextMenu.Trigger>
-              <ContextMenu.Content>
-                {contextItems.map((item) => (
-                  <ContextMenu.Item key={item.title} onSelect={item.action}>
-                    <ContextMenu.ItemTitle>{item.title}</ContextMenu.ItemTitle>
-                    <ContextMenu.ItemIcon
-                      ios={{
-                        name: item.systemIcon,
-                        pointSize: 18,
-                      }}
-                    />
-                  </ContextMenu.Item>
-                ))}
-              </ContextMenu.Content>
-            </ContextMenu.Root>
+          {/* Multiple image support */}
+          {imageUrls?.length > 0 && (
+            <View style={styles.imageWrap}>
+              {imageUrls.map((uri, i) => renderImage(uri, i))}
+            </View>
           )}
-{typeof content === 'string' && content.trim() !== '' && (
-  <Text style={styles.text}>{content}</Text>
-)}
 
+          {/* Single image fallback */}
+          {!imageUrls && imageUrl && renderImage(imageUrl, 0)}
+
+          {/* Text */}
+          {typeof content === 'string' && content.trim() !== '' && (
+            <Text style={styles.text}>{content}</Text>
+          )}
 
           {!imageUrl && typeof content !== 'string' && content}
         </View>
@@ -124,21 +137,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#E0E0E0',
   },
   text: {
-    padding: 4,
+    paddingTop: 6,
     fontSize: 16,
     flexWrap: 'wrap',
     flex: 1,
   },
-  caption: {
-    fontSize: 14,
-    marginTop: 6,
-    color: Colors.grey,
-    flexWrap: 'wrap',
-  },
   previewImage: {
-    width: 240,
-    height: 240,
+    width: 180,
+    height: 180,
     borderRadius: 10,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  imageWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
   },
   loading: {
     justifyContent: 'center',

@@ -1,6 +1,6 @@
 import Colors from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { TextInput, TouchableOpacity } from 'react-native-gesture-handler';
 import Animated, {
   Extrapolation,
@@ -20,13 +20,15 @@ import { Image } from 'react-native';
 const ATouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 export type Props = {
-  onShouldSend: (message: string, imageUri?: string) => void;
+  onShouldSend: (message: string, imageUris?: string[]) => void;
+  isDisabled?: boolean;
 };
 
-const MessageInput = ({ onShouldSend }: Props) => {
+
+const MessageInput = ({ onShouldSend, isDisabled }: Props) => {
   const [message, setMessage] = useState('');
   const { bottom } = useSafeAreaInsets();
-  const [attachedImage, setAttachedImage] = useState<string | null>(null);
+const [attachedImages, setAttachedImages] = useState<string[]>([]);
   const expanded = useSharedValue(0);
   const inputRef = useRef<TextInput>(null);
 
@@ -62,41 +64,55 @@ const MessageInput = ({ onShouldSend }: Props) => {
   };
 
 const onSend = () => {
-  if (!message.trim() && !attachedImage) return;
+  if (!message.trim() && attachedImages.length === 0) return;
 
-  onShouldSend(message.trim(), attachedImage || undefined);
+onShouldSend(message.trim(), attachedImages.length > 0 ? attachedImages : undefined);
   setMessage('');
-  setAttachedImage(null);
+  setAttachedImages([]);
 };
+
 
 
 const onImagePick = async () => {
   const result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    allowsMultipleSelection: false,
+    allowsMultipleSelection: true,
     quality: 1,
   });
 
   if (!result.canceled && result.assets && result.assets.length > 0) {
-    const imageUri = result.assets[0].uri;
-    setAttachedImage(imageUri); // ✅ only attach, don't send yet
+    const selected = result.assets.map((a) => a.uri);
+    setAttachedImages((prev) => [...prev, ...selected]);
   }
 };
 
 
 
+
   return (
 <BlurView intensity={90} tint="extraLight" style={{ paddingBottom: bottom, paddingTop: 10 }}>
-  {attachedImage && (
-    <View style={styles.attachmentPreviewContainer}>
-      <View style={styles.attachmentPreview}>
-        <Image source={{ uri: attachedImage }} style={styles.previewImage} />
-        <TouchableOpacity onPress={() => setAttachedImage(null)} style={styles.removeButton}>
+{attachedImages.length > 0 && (
+  <ScrollView
+    horizontal
+    style={styles.attachmentPreviewContainer}
+    contentContainerStyle={{ alignItems: 'center' }}
+  >
+    {attachedImages.map((uri, index) => (
+      <View key={index} style={styles.attachmentPreview}>
+        <Image source={{ uri }} style={styles.previewImage} />
+        <TouchableOpacity
+          onPress={() =>
+            setAttachedImages((prev) => prev.filter((_, i) => i !== index))
+          }
+          style={styles.removeButton}
+        >
           <Ionicons name="close-circle" size={20} color={Colors.grey} />
         </TouchableOpacity>
       </View>
-    </View>
-  )}
+    ))}
+  </ScrollView>
+)}
+
 
   <View style={styles.row}>
     <ATouchableOpacity onPress={expandItems} style={[styles.roundBtn, expandButtonStyle]}>
@@ -128,13 +144,24 @@ const onImagePick = async () => {
       multiline
     />
 
-    <TouchableOpacity onPress={onSend} disabled={message.trim().length === 0 && !attachedImage}>
-      <Ionicons
-        name="arrow-up-circle"
-        size={24}
-        color={(message.trim().length > 0 || attachedImage) ? Colors.grey : Colors.greyLight}
-      />
-    </TouchableOpacity>
+<TouchableOpacity
+  onPress={onSend}
+  disabled={isDisabled || (message.trim().length === 0 && attachedImages.length === 0)}
+>
+  <Ionicons
+    name="arrow-up-circle"
+    size={24}
+    color={
+      isDisabled
+        ? Colors.greyLight
+        : message.trim().length > 0 || attachedImages.length > 0
+        ? Colors.grey
+        : Colors.greyLight
+    }
+  />
+</TouchableOpacity>
+
+
   </View>
 </BlurView>
 
@@ -171,21 +198,31 @@ const styles = StyleSheet.create({
   },
 attachmentPreviewContainer: {
   paddingHorizontal: 20,
-  paddingBottom: 8,
+  paddingVertical: 8,
+  overflow: 'visible', // ✅ Allow overflow for buttons
 },
+
 attachmentPreview: {
-  flexDirection: 'row',
-  alignItems: 'center',
+  overflow: 'visible',
+  marginRight: 8,
+  position: 'relative',
 },
 previewImage: {
   width: 60,
   height: 60,
   borderRadius: 8,
-  marginRight: 8,
 },
 removeButton: {
-  padding: 4,
+  position: 'absolute',
+  top: -20,
+  right: -6,
+  backgroundColor: 'white',
+  borderRadius: 12,
+  padding: 2, // ✅ Slight padding around icon
+  zIndex: 1,
 },
+
+
 
 });
 

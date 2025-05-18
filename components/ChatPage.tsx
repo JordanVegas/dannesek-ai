@@ -24,7 +24,6 @@ import { useSQLiteContext } from 'expo-sqlite/next';
 import { talkToAssistant, uploadImageToOpenAI } from '@/utils/assistantApi';
 import { TypingDots } from '@/components/TypingDots';
 
-
 const ChatPage = () => {
   const [gptVersion, setGptVersion] = useState('4');
   const [height, setHeight] = useState(0);
@@ -34,6 +33,7 @@ const ChatPage = () => {
   const id = typeof params.id === 'string' ? params.id : '';
   const [isTyping, setIsTyping] = useState(false);
   const router = useRouter();
+  const [threadId, setThreadId] = useState<string | null>(null);
 
   const [chatId, _setChatId] = useState(id);
   const chatIdRef = useRef(chatId);
@@ -42,17 +42,42 @@ const ChatPage = () => {
     _setChatId(id);
   }
 
+  const [chatName, setChatName] = useState(params.name || '');
   const [showNameModal, setShowNameModal] = useState(false);
-  const [chatName, setChatName] = useState('');
 
   useEffect(() => {
-    if (!id || id === 'new') {
-      setShowNameModal(true);
-    } else {
-      getMessages(db, parseInt(id)).then((res) => {
-        setMessages(res);
-      });
-    }
+    const initChat = async () => {
+      if (!id || id === 'new') {
+        const res = await addChat(db, 'New Chat');
+        const newId = res.lastInsertRowId.toString();
+        setChatId(newId);
+        setShowNameModal(true);
+        router.replace(`/(auth)/(drawer)/(chat)/${newId}`);
+        return;
+      }
+
+      const numericId = parseInt(id);
+
+      const threadRow = await db.getFirstAsync<{ thread_id: string }>(
+        'SELECT thread_id FROM chats WHERE id = ?',
+        [numericId]
+      );
+      setThreadId(threadRow?.thread_id ?? null);
+
+      const chatRow = await db.getFirstAsync<{ title: string }>(
+        'SELECT title FROM chats WHERE id = ?',
+        [numericId]
+      );
+
+      if (chatRow?.title === 'New Chat') {
+        setShowNameModal(true);
+      }
+
+      const msgs = await getMessages(db, numericId);
+      setMessages(msgs);
+    };
+
+    initChat();
   }, [id]);
 
   const createNamedChat = async () => {
@@ -61,11 +86,8 @@ const ChatPage = () => {
       return;
     }
 
-    const res = await addChat(db, chatName.trim());
-    const newChatId = res.lastInsertRowId.toString();
-    setChatId(newChatId);
+    await db.runAsync('UPDATE chats SET title = ? WHERE id = ?', chatName.trim(), chatIdRef.current);
     setShowNameModal(false);
-    router.replace(`/(auth)/(drawer)/(chat)/${newChatId}`);
   };
 
   const onGptVersionChange = (version: string) => {
@@ -77,62 +99,64 @@ const ChatPage = () => {
     setHeight(height / 2);
   };
 
-const getCompletion = async (text: string, imageUri?: string) => {
-  const isImage = !!imageUri;
+  const getCompletion = async (text: string, imageUris?: string[]) => {
+    const hasImages = Array.isArray(imageUris) && imageUris.length > 0;
 
-setMessages((prev) => [...prev, { role: Role.User, content: text, imageUrl: imageUri }]);
-  setIsTyping(!isImage);
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: Role.User,
+        content: text,
+        imageUrls: imageUris,
+      },
+    ]);
 
-  const chatContent = isImage ? `[Image]: ${imageUri}` : text;
+    setIsTyping(true);
 
-  if (messages.length === 0) {
-    const res = await addChat(db, text);
-    const newChatId = res.lastInsertRowId;
-    setChatId(newChatId.toString());
-    await addMessage(db, newChatId, { content: chatContent, role: Role.User });
-  } else {
+    const chatContent = text;
     await addMessage(db, parseInt(chatIdRef.current), { content: chatContent, role: Role.User });
-  }
 
-  let reply = '';
-  if (isImage) {
-    const fileId = await uploadImageToOpenAI(imageUri!);
-    if (!fileId) {
-      Alert.alert('Image upload failed');
-      setIsTyping(false);
-      return;
+    let fileIds: string[] = [];
+    if (hasImages) {
+      for (const uri of imageUris!) {
+        const id = await uploadImageToOpenAI(uri);
+        if (!id) {
+          Alert.alert('Image upload failed');
+          setIsTyping(false);
+          return;
+        }
+        fileIds.push(id);
+      }
     }
-    reply = await talkToAssistant(text, imageUri, fileId);
-  } else {
-    reply = await talkToAssistant(text);
-  }
 
-  setMessages((prev) => [...prev, { role: Role.Bot, content: '' }]);
+    const reply = await talkToAssistant(text, fileIds.length > 0 ? fileIds : undefined, threadId ?? undefined);
 
-  let i = 0;
-  const interval = setInterval(() => {
-    i += 3;
-    setMessages((prev) => {
-      const updated = [...prev];
-      const botMsg = updated[updated.length - 1];
-      updated[updated.length - 1] = {
-        ...botMsg,
-        content: reply.slice(0, i),
-      };
-      return updated;
+    setMessages((prev) => [...prev, { role: Role.Bot, content: '' }]);
+
+    let i = 0;
+    const interval = setInterval(() => {
+      i += 6;
+      setMessages((prev) => {
+        const updated = [...prev];
+        const botMsg = updated[updated.length - 1];
+        updated[updated.length - 1] = {
+          ...botMsg,
+          content: reply.slice(0, i),
+        };
+        return updated;
+      });
+
+      if (i >= reply.length) {
+        clearInterval(interval);
+        setIsTyping(false);
+      }
+    }, 3);
+
+    await addMessage(db, parseInt(chatIdRef.current), {
+      content: reply,
+      role: Role.Bot,
     });
-
-    if (i >= reply.length) {
-      clearInterval(interval);
-      setIsTyping(false);
-    }
-  }, 5);
-
-  await addMessage(db, parseInt(chatIdRef.current), {
-    content: reply,
-    role: Role.Bot,
-  });
-};
+  };
 
   return (
     <View style={defaultStyles.pageContainer}>
@@ -171,7 +195,7 @@ setMessages((prev) => [...prev, { role: Role.User, content: text, imageUrl: imag
 
       <View style={styles.page} onLayout={onLayout}>
         {messages.length === 0 && (
-          <View style={[styles.logoContainer, { marginTop: height / 2 - 100 }]}>
+          <View style={[styles.logoContainer, { marginTop: height / 2 - 100 }]}> 
             <Image source={require('@/assets/images/logo-white.png')} style={styles.image} />
           </View>
         )}
@@ -188,13 +212,12 @@ setMessages((prev) => [...prev, { role: Role.User, content: text, imageUrl: imag
               return <ChatMessage role={Role.Bot} content={<TypingDots />} />;
             }
 
-return (
-  <ChatMessage
-    {...item}
-    imageUrl={'imageUrl' in item ? item.imageUrl : undefined}
-  />
-);
-
+            return (
+              <ChatMessage
+                {...item}
+                imageUrl={'imageUrl' in item ? item.imageUrl : undefined}
+              />
+            );
           }}
           estimatedItemSize={400}
           contentContainerStyle={{ paddingTop: 30, paddingBottom: 150 }}
@@ -208,7 +231,7 @@ return (
         style={{ position: 'absolute', bottom: 0, left: 0, width: '100%' }}
       >
         {messages.length === 0 && <MessageIdeas onSelectCard={getCompletion} />}
-        <MessageInput onShouldSend={getCompletion} />
+        <MessageInput onShouldSend={getCompletion} isDisabled={isTyping} />
       </KeyboardAvoidingView>
     </View>
   );

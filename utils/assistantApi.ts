@@ -51,11 +51,7 @@ export const uploadImageToOpenAI = async (uri: string): Promise<string | null> =
 };
 
 
-export const talkToAssistant = async (
-  userInput: string,
-  imageUri?: string,
-  imageFileId?: string
-): Promise<string> => {
+export const talkToAssistant = async (userInput: string, imageFileIds?: string[]): Promise<string> => {
   if (!API_KEY || !ASSISTANT_ID || !ORGANIZATION) {
     Alert.alert('Missing API Key, Assistant ID, or Org ID');
     return 'Error: Missing credentials';
@@ -84,19 +80,16 @@ const messagePayload: any = {
   content: [],
 };
 
-if (userInput) {
-  messagePayload.content.push({
-    type: 'text',
-    text: userInput,
+if (userInput.trim()) {
+  messagePayload.content.push({ type: 'text', text: userInput });
+}
+
+if (imageFileIds?.length) {
+  imageFileIds.forEach((id) => {
+    messagePayload.content.push({ type: 'image_file', image_file: { file_id: id } });
   });
 }
 
-if (imageFileId) {
-  messagePayload.content.push({
-    type: 'image_file',
-    image_file: { file_id: imageFileId },
-  });
-}
 
     const msgRes = await fetch(`${BASE_URL}/threads/${threadId}/messages`, {
       method: 'POST',

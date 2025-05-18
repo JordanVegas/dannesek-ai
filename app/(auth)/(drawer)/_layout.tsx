@@ -41,6 +41,8 @@ export const CustomDrawerContent = (props: any) => {
 
   const loadChats = async () => {
     const result = (await getChats(db)) as Chat[];
+    console.log('Loaded chats:', result);
+    
     setHistory(result);
   };
 
@@ -133,14 +135,11 @@ const Layout = () => {
   const router = useRouter();
   const db = useSQLiteContext();
 
-  const handleNewChat = async () => {
-    const chats = await getChats(db);
-    if (chats.length > 50000) {
-      Alert.alert('Limit Reached', 'You can only create up to 5 chats.');
-    } else {
-      router.push('/(auth)/(drawer)/(chat)/new');
-    }``
-  };
+const handleNewChat = async () => {
+  router.push('/(auth)/(drawer)/(chat)/new');
+};
+
+
 
   return (
     <Drawer

@@ -3,46 +3,64 @@ import { type SQLiteDatabase } from 'expo-sqlite/next';
 import * as FileSystem from 'expo-file-system';
 
 export async function migrateDbIfNeeded(db: SQLiteDatabase) {
-  // Log DB path for debugging
-  // console.log(FileSystem.documentDirectory);
-  const DATABASE_VERSION = 1;
-  let result = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
-
+  const DATABASE_VERSION = 2;
+  const result = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
   let currentDbVersion = result?.user_version ?? 0;
 
-  if (currentDbVersion >= DATABASE_VERSION) {
-    return;
-  }
   if (currentDbVersion === 0) {
-    const result = await db.execAsync(`
-PRAGMA journal_mode = 'wal';
-CREATE TABLE chats (
-  id INTEGER PRIMARY KEY NOT NULL, 
-  title TEXT NOT NULL
-);
+    // Check if tables already exist before creating
+    const tables = await db.getAllAsync<{ name: string }>(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('chats', 'messages')"
+    );
 
-CREATE TABLE messages (
-  id INTEGER PRIMARY KEY NOT NULL, 
-  chat_id INTEGER NOT NULL, 
-  content TEXT NOT NULL, 
-  imageUrl TEXT, 
-  role TEXT, 
-  prompt TEXT, 
-  FOREIGN KEY (chat_id) REFERENCES chats (id) ON DELETE CASCADE
-);
-`);
+    const tableNames = tables.map((t) => t.name);
+    if (!tableNames.includes('chats')) {
+      await db.execAsync(`
+        CREATE TABLE chats (
+          id INTEGER PRIMARY KEY NOT NULL,
+          title TEXT NOT NULL,
+          thread_id TEXT
+        );
+      `);
+    }
+
+    if (!tableNames.includes('messages')) {
+      await db.execAsync(`
+        CREATE TABLE messages (
+          id INTEGER PRIMARY KEY NOT NULL,
+          chat_id INTEGER NOT NULL,
+          content TEXT NOT NULL,
+          imageUrl TEXT,
+          role TEXT,
+          prompt TEXT,
+          FOREIGN KEY (chat_id) REFERENCES chats (id) ON DELETE CASCADE
+        );
+      `);
+    }
 
     currentDbVersion = 1;
   }
-  // if (currentDbVersion === 1) {
-  //   Add more migrations
-  // }
+
+  if (currentDbVersion === 1) {
+    const columns = await db.getAllAsync<{ name: string }>('PRAGMA table_info(chats)');
+    const hasThreadId = columns.some((col) => col.name === 'thread_id');
+    if (!hasThreadId) {
+      await db.execAsync(`ALTER TABLE chats ADD COLUMN thread_id TEXT`);
+    }
+    currentDbVersion = 2;
+  }
 
   await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
 }
 
-export const addChat = async (db: SQLiteDatabase, title: string) => {
-  return await db.runAsync('INSERT INTO chats (title) VALUES (?)', title);
+
+
+export const addChat = async (db: SQLiteDatabase, title: string, threadId?: string) => {
+  return await db.runAsync(
+    'INSERT INTO chats (title, thread_id) VALUES (?, ?)',
+    title,
+    threadId ?? null
+  );
 };
 
 export const getChats = async (db: SQLiteDatabase) => {
