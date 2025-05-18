@@ -14,6 +14,8 @@ import { useRef, useState } from 'react';
 import { BlurView } from 'expo-blur';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
+import { Image } from 'react-native';
+
 
 const ATouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -24,6 +26,7 @@ export type Props = {
 const MessageInput = ({ onShouldSend }: Props) => {
   const [message, setMessage] = useState('');
   const { bottom } = useSafeAreaInsets();
+  const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const expanded = useSharedValue(0);
   const inputRef = useRef<TextInput>(null);
 
@@ -58,23 +61,29 @@ const MessageInput = ({ onShouldSend }: Props) => {
     setMessage(text);
   };
 
-  const onSend = () => {
-    onShouldSend(message.trim());
-    setMessage('');
-  };
+const onSend = () => {
+  if (!message.trim() && !attachedImage) return;
 
-  const onImagePick = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: false,
-      quality: 1,
-    });
+  onShouldSend(message.trim(), attachedImage || undefined);
+  setMessage('');
+  setAttachedImage(null);
+};
 
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      const imageUri = result.assets[0].uri;
-      onShouldSend('Here is the image:', imageUri); // Send message with image
-    }
-  };
+
+const onImagePick = async () => {
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsMultipleSelection: false,
+    quality: 1,
+  });
+
+  if (!result.canceled && result.assets && result.assets.length > 0) {
+    const imageUri = result.assets[0].uri;
+    setAttachedImage(imageUri); // ✅ only attach, don't send yet
+  }
+};
+
+
 
   return (
     <BlurView intensity={90} tint="extraLight" style={{ paddingBottom: bottom, paddingTop: 10 }}>
@@ -96,6 +105,14 @@ const MessageInput = ({ onShouldSend }: Props) => {
             <Ionicons name="folder-outline" size={24} color={Colors.grey} />
           </TouchableOpacity>
         </Animated.View>
+{attachedImage && (
+  <View style={styles.attachmentPreview}>
+    <Image source={{ uri: attachedImage }} style={styles.previewImage} />
+    <TouchableOpacity onPress={() => setAttachedImage(null)} style={styles.removeButton}>
+      <Ionicons name="close-circle" size={20} color={Colors.grey} />
+    </TouchableOpacity>
+  </View>
+)}
 
         <TextInput
           autoFocus
@@ -148,6 +165,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
+  attachmentPreview: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 8,
+},
+previewImage: {
+  width: 60,
+  height: 60,
+  borderRadius: 8,
+  marginRight: 8,
+},
+removeButton: {
+  padding: 4,
+},
+
 });
 
 export default MessageInput;

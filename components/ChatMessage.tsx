@@ -88,14 +88,10 @@ const ChatMessage = ({
               </ContextMenu.Content>
             </ContextMenu.Root>
           )}
+{typeof content === 'string' && content.trim() !== '' && (
+  <Text style={styles.text}>{content}</Text>
+)}
 
-          {typeof content === 'string' && imageCaption && (
-            <Text style={styles.caption}>{imageCaption}</Text>
-          )}
-
-          {!imageUrl && typeof content === 'string' && (
-            <Text style={styles.text}>{content}</Text>
-          )}
 
           {!imageUrl && typeof content !== 'string' && content}
         </View>

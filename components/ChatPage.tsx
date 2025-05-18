@@ -80,7 +80,7 @@ const ChatPage = () => {
 const getCompletion = async (text: string, imageUri?: string) => {
   const isImage = !!imageUri;
 
-  setMessages((prev) => [...prev, { role: Role.User, content: isImage ? `[Image]: ${imageUri}` : text }]);
+setMessages((prev) => [...prev, { role: Role.User, content: text, imageUrl: imageUri }]);
   setIsTyping(!isImage);
 
   const chatContent = isImage ? `[Image]: ${imageUri}` : text;
@@ -102,7 +102,7 @@ const getCompletion = async (text: string, imageUri?: string) => {
       setIsTyping(false);
       return;
     }
-    reply = await talkToAssistant(text || '', imageUri, fileId);
+    reply = await talkToAssistant(text, imageUri, fileId);
   } else {
     reply = await talkToAssistant(text);
   }
@@ -188,16 +188,13 @@ const getCompletion = async (text: string, imageUri?: string) => {
               return <ChatMessage role={Role.Bot} content={<TypingDots />} />;
             }
 
-            const isImage = typeof item.content === 'string' && item.content.startsWith('[Image]:');
-            const imageUrl = isImage ? item.content.replace('[Image]:', '').trim() : undefined;
+return (
+  <ChatMessage
+    {...item}
+    imageUrl={'imageUrl' in item ? item.imageUrl : undefined}
+  />
+);
 
-            return (
-              <ChatMessage
-                {...item}
-                imageUrl={imageUrl}
-                prompt={isImage ? 'Image from user' : undefined}
-              />
-            );
           }}
           estimatedItemSize={400}
           contentContainerStyle={{ paddingTop: 30, paddingBottom: 150 }}
