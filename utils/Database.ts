@@ -1,5 +1,5 @@
 import { Message, Role } from '@/utils/Interfaces';
-import { type SQLiteDatabase } from 'expo-sqlite/next';
+import { type SQLiteDatabase } from 'expo-sqlite';
 import * as FileSystem from 'expo-file-system';
 
 export async function migrateDbIfNeeded(db: SQLiteDatabase) {

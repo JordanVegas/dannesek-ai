@@ -20,7 +20,7 @@ import ChatMessage from '@/components/ChatMessage';
 import { Message, Role } from '@/utils/Interfaces';
 import MessageIdeas from '@/components/MessageIdeas';
 import { addChat, addMessage, getMessages } from '@/utils/Database';
-import { useSQLiteContext } from 'expo-sqlite/next';
+import { useSQLiteContext } from 'expo-sqlite';
 import { talkToAssistant, uploadImageToOpenAI } from '@/utils/assistantApi';
 import { TypingDots } from '@/components/TypingDots';
 

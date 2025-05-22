@@ -2,7 +2,7 @@ import Colors from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import { TouchableOpacity } from 'react-native';
-import { SQLiteProvider } from 'expo-sqlite/next';
+import { SQLiteProvider } from 'expo-sqlite';
 import { migrateDbIfNeeded } from '@/utils/Database';
 import { RevenueCatProvider } from '@/providers/RevenueCat';
 
