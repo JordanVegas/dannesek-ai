@@ -1,6 +1,6 @@
 import Colors from '@/constants/Colors';
 import { memo } from 'react';
-import { StyleSheet, useWindowDimensions } from 'react-native';
+import { StyleSheet, useWindowDimensions, View, Image } from 'react-native';
 import Animated, {
   interpolate,
   interpolateColor,
@@ -15,30 +15,30 @@ import { ReText } from 'react-native-redash';
 
 const content = [
   {
-    title: "Let's create.",
-    bg: Colors.lime,
-    fontColor: Colors.pink,
+    title: 'AskDan.',
+    bg: '#AE5540',
+    fontColor: '#F2F2F2',
   },
   {
-    title: "Let's brainstorm.",
-    bg: Colors.brown,
+    title: "Let's date.",
+    bg: '#000000',
+    fontColor: '#AE5540',
+  },
+  {
+    title: "Let's meet.",
+    bg: '#503632',
     fontColor: Colors.sky,
   },
   {
-    title: "Let's discover.",
-    bg: Colors.orange,
-    fontColor: Colors.blue,
+    title: "Let's learn.",
+    bg: '#A69087',
+    fontColor: '#F0F0F0',
   },
   {
-    title: "Let's go.",
-    bg: Colors.teal,
-    fontColor: Colors.yellow,
-  },
-  {
-    title: 'ChatGPT.',
-    bg: Colors.green,
-    fontColor: Colors.pink,
-  },
+    title: "Let's start.",
+    bg: '#432524',
+    fontColor: '#F0F0F0',
+  }
 ];
 
 const AnimatedIntro = () => {
@@ -178,6 +178,9 @@ const AnimatedIntro = () => {
 
   return (
     <Animated.View style={[styles.wrapper, style1]}>
+                              <View style={[styles.logoContainer]}> 
+                  <Image source={require('@/assets/images/logo-white.png')} style={styles.image} />
+                </View>
       <Animated.View style={[styles.content]}>
         <Animated.View style={[styles.ball, ballStyle]} />
         <Animated.View style={[styles.mask, mask]} />
@@ -194,6 +197,23 @@ const AnimatedIntro = () => {
 };
 
 const styles = StyleSheet.create({
+    logoContainer: {
+    alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+    // width: 200,
+    // height: 200,
+    // backgroundColor: '#000',
+    // borderRadius: 200,
+    position: 'absolute',
+    top: '10%'
+  },
+  image: {
+    width: 200,
+    height: 200,
+    resizeMode: 'stretch',
+    borderRadius:50,
+  },
   wrapper: {
     flex: 1,
   },

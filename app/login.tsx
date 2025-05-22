@@ -82,13 +82,13 @@ const Login = () => {
         </View>
       )}
 
-      <Image source={require('../assets/images/logo-dark.png')} style={styles.logo} />
+        <Image source={require('@/assets/images/logo-white.png')} style={styles.logo} />
 
-      <Text style={styles.title}>{type === 'login' ? 'Welcome back' : 'Create your account'}</Text>
+      <Text style={styles.title}>{type === 'login' ? 'Welcome back' : 'Get your access'}</Text>
       <View style={{ marginBottom: 30 }}>
         <TextInput
           autoCapitalize="none"
-          placeholder="john@apple.com"
+          placeholder="dan@gmail.com"
           value={emailAddress}
           onChangeText={setEmailAddress}
           style={styles.inputField}
@@ -122,10 +122,11 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   logo: {
-    width: 60,
-    height: 60,
+    width: 100,
+    height: 100,
     alignSelf: 'center',
-    marginVertical: 80,
+    borderRadius: 100,
+    marginVertical: 60,
   },
   title: {
     fontSize: 30,
