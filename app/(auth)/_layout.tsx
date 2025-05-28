@@ -4,13 +4,13 @@ import { Stack, useRouter } from 'expo-router';
 import { TouchableOpacity } from 'react-native';
 import { SQLiteProvider } from 'expo-sqlite';
 import { migrateDbIfNeeded } from '@/utils/Database';
-import { RevenueCatProvider } from '@/providers/RevenueCat';
+// import { RevenueCatProvider } from '@/providers/RevenueCat';
 
 const Layout = () => {
   const router = useRouter();
 
   return (
-    <RevenueCatProvider>
+    // <RevenueCatProvider>
       <SQLiteProvider databaseName="chat.db" onInit={migrateDbIfNeeded}>
         <Stack
           screenOptions={{
@@ -68,7 +68,7 @@ const Layout = () => {
           />
         </Stack>
       </SQLiteProvider>
-    </RevenueCatProvider>
+    // </RevenueCatProvider>
   );
 };
 

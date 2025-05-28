@@ -4,13 +4,12 @@ import MessageInput from '@/components/MessageInput';
 import Colors from '@/constants/Colors';
 import { defaultStyles } from '@/constants/Styles';
 import { Message, Role } from '@/utils/Interfaces';
-import { keyStorage } from '@/utils/Storage';
 import { FlashList } from '@shopify/flash-list';
 import { Redirect, Stack } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Image, View, StyleSheet, Text, KeyboardAvoidingView, Platform } from 'react-native';
-import { useMMKVString } from 'react-native-mmkv';
 import OpenAI from 'react-native-openai';
+import Constants from 'expo-constants';
 
 // const dummyMessages = [
 //   {
@@ -24,23 +23,22 @@ import OpenAI from 'react-native-openai';
 
 const Page = () => {
   const [height, setHeight] = useState(0);
-  const [key, setKey] = useMMKVString('apikey', keyStorage);
-  const [organization, setOrganization] = useMMKVString('org', keyStorage);
   const [messages, setMessages] = useState<Message[]>([]);
   const [working, setWorking] = useState(false);
 
-  console.log('key',  process.env.EXPO_PUBLIC_OPENAI_API_KEY);
-  console.log('organization', process.env.EXPO_PUBLIC_OPENAI_ORGANIZATION);
-  
+const {
+  OPENAI_API_KEY,
+  OPENAI_ORGANIZATION,
+} = Constants.expoConfig?.extra ?? {};
 
-  const openAI = useMemo(
-    () =>
-      new OpenAI({
-        apiKey: process.env.EXPO_PUBLIC_OPENAI_API_KEY || '',
-        organization: process.env.EXPO_PUBLIC_OPENAI_ORGANIZATION || '',
-      }),
-    []
-  );
+const openAI = useMemo(
+  () =>
+    new OpenAI({
+      apiKey: OPENAI_API_KEY || '',
+      organization: OPENAI_ORGANIZATION || '',
+    }),
+  [OPENAI_API_KEY, OPENAI_ORGANIZATION]
+);
 
   const onLayout = (event: any) => {
     const { height } = event.nativeEvent.layout;

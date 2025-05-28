@@ -1,18 +1,24 @@
 import { Alert } from 'react-native';
 
-const API_KEY = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
-const ASSISTANT_ID = process.env.EXPO_PUBLIC_OPENAI_ASSISTANT_ID;
-const ORGANIZATION = process.env.EXPO_PUBLIC_OPENAI_ORGANIZATION;
+import Constants from 'expo-constants';
+
+const {
+  OPENAI_API_KEY,
+  OPENAI_ASSISTANT_ID,
+  OPENAI_ORGANIZATION,
+} = Constants.expoConfig?.extra ?? {};
+
 const BASE_URL = 'https://api.openai.com/v1';
 
 let threadId: string | null = null;
 
 const headers = {
-  Authorization: `Bearer ${API_KEY}`,
-  'OpenAI-Organization': ORGANIZATION,
+  Authorization: `Bearer ${OPENAI_API_KEY}`,
+  'OpenAI-Organization': OPENAI_ORGANIZATION,
   'OpenAI-Beta': 'assistants=v2',
   'Content-Type': 'application/json',
 };
+
 
 export const uploadImageToOpenAI = async (uri: string): Promise<string | null> => {
   try {
@@ -30,8 +36,8 @@ export const uploadImageToOpenAI = async (uri: string): Promise<string | null> =
     const res = await fetch('https://api.openai.com/v1/files', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${process.env.EXPO_PUBLIC_OPENAI_API_KEY}`,
-        'OpenAI-Organization': process.env.EXPO_PUBLIC_OPENAI_ORGANIZATION!,
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        'OpenAI-Organization': OPENAI_ORGANIZATION!,
         'OpenAI-Beta': 'assistants=v2',
       },
       body: formData,
@@ -52,10 +58,16 @@ export const uploadImageToOpenAI = async (uri: string): Promise<string | null> =
 
 
 export const talkToAssistant = async (userInput: string, imageFileIds?: string[]): Promise<string> => {
+  console.log('🗣️ Talking to assistant:', userInput, imageFileIds);
+  console.log('Using API');
+  
   if (!API_KEY || !ASSISTANT_ID || !ORGANIZATION) {
-    Alert.alert('Missing API Key, Assistant ID, or Org ID');
-    return 'Error: Missing credentials';
+   // Alert.alert('Missing API Key, Assistant ID, or Org ID');
+    console.log('Error: Missing credentials');
   }
+  console.log('Using API Key:', OPENAI_API_KEY);
+  console.log('Using Assistant ID:', OPENAI_ASSISTANT_ID);
+console.log('Using Organization:', OPENAI_ORGANIZATION);
 
   try {
     // Ensure assistant is available
@@ -68,8 +80,12 @@ export const talkToAssistant = async (userInput: string, imageFileIds?: string[]
 
     // Create thread if needed
     if (!threadId) {
+      console.log('Creating new thread');
+      
       const threadRes = await fetch(`${BASE_URL}/threads`, { method: 'POST', headers });
       if (!threadRes.ok) return 'Error creating thread';
+      console.log('Thread created successfully');
+      
       const thread = await threadRes.json();
       threadId = thread.id;
     }
@@ -90,6 +106,7 @@ if (imageFileIds?.length) {
   });
 }
 
+console.log('Sending message:', messagePayload);
 
     const msgRes = await fetch(`${BASE_URL}/threads/${threadId}/messages`, {
       method: 'POST',

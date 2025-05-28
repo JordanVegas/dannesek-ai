@@ -24,7 +24,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useDrawerStatus } from '@react-navigation/drawer';
 import { Chat } from '@/utils/Interfaces';
 import * as ContextMenu from 'zeego/context-menu';
-import { useRevenueCat } from '@/providers/RevenueCat';
+// import { useRevenueCat } from '@/providers/RevenueCat';
 import { useClerk } from '@clerk/clerk-expo';
 import { useNavigationState } from '@react-navigation/native';
 
@@ -203,7 +203,7 @@ console.log(currentChatId);
 const Layout = () => {
   const navigation = useNavigation();
   const dimensions = useWindowDimensions();
-  const { user } = useRevenueCat();
+  // const { user } = useRevenueCat();
   const router = useRouter();
 
   const handleNewChat = async () => {

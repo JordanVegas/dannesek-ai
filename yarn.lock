@@ -2066,11 +2066,6 @@
   dependencies:
     nanoid "^3.3.11"
 
-"@revenuecat/purchases-typescript-internal@11.1.1":
-  version "11.1.1"
-  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-typescript-internal/-/purchases-typescript-internal-11.1.1.tgz#ce996cbf4b51ea37016790105a023159211e531e"
-  integrity sha512-xYxv+vZJRPc//XqMAjxtu0fiN66WRmBORap37zA3DQymB9vKAJuTYqv9xMP2xSMglUYsA42M5DgdW2PMBCxfHA==
-
 "@shopify/flash-list@1.7.6":
   version "1.7.6"
   resolved "https://registry.yarnpkg.com/@shopify/flash-list/-/flash-list-1.7.6.tgz#367e76866c71d1f1be0ff70f0b28be4bbfbcf595"
@@ -5916,7 +5911,7 @@ react-native-gesture-handler@~2.24.0:
     hoist-non-react-statics "^3.3.0"
     invariant "^2.2.4"
 
-react-native-ios-context-menu@^3.1.0:
+react-native-ios-context-menu@^3.1.2:
   version "3.1.2"
   resolved "https://registry.yarnpkg.com/react-native-ios-context-menu/-/react-native-ios-context-menu-3.1.2.tgz#91a1270178dc25c23a9fcbf191596585d65d2da3"
   integrity sha512-xmwdygAlmEofBzQvIhJd5qa+2DzPznmWuwkkqkI9NJbe+cfOmIzbvLdVD5RkiayewnCX9Mp8v/muf3BRWq/T1A==
@@ -5933,22 +5928,10 @@ react-native-is-edge-to-edge@1.1.7, react-native-is-edge-to-edge@^1.1.6:
   resolved "https://registry.yarnpkg.com/react-native-is-edge-to-edge/-/react-native-is-edge-to-edge-1.1.7.tgz#28947688f9fafd584e73a4f935ea9603bd9b1939"
   integrity sha512-EH6i7E8epJGIcu7KpfXYXiV2JFIYITtq+rVS8uEb+92naMRBdxhTuS8Wn2Q7j9sqyO0B+Xbaaf9VdipIAmGW4w==
 
-react-native-mmkv@^2.12.2:
-  version "2.12.2"
-  resolved "https://registry.yarnpkg.com/react-native-mmkv/-/react-native-mmkv-2.12.2.tgz#4bba0f5f04e2cf222494cce3a9794ba6a4894dee"
-  integrity sha512-6058Aq0p57chPrUutLGe9fYoiDVDNMU2PKV+lLFUJ3GhoHvUrLdsS1PDSCLr00yqzL4WJQ7TTzH+V8cpyrNcfg==
-
 react-native-openai@^0.6.1:
   version "0.6.2"
   resolved "https://registry.yarnpkg.com/react-native-openai/-/react-native-openai-0.6.2.tgz#496f8a414824bbf4a8fe81072e19a4dcfbc27516"
   integrity sha512-m55c7EdxNnUNI38P8TUjXWsfjSPJDYCHS+ybY0DYcGYwHpffwaVj/+3RCFvpUFK+MDcSpfWMTnUpu85FqsRxQQ==
-
-react-native-purchases@^7.26.2:
-  version "7.28.1"
-  resolved "https://registry.yarnpkg.com/react-native-purchases/-/react-native-purchases-7.28.1.tgz#3ee48869017e57ca74230bcc4a5873624ff36163"
-  integrity sha512-5nd8s79dq+O9O+B0Gn9QNrKHn63kMNm5NQx1mnN8awBaDe95YpjqBaAgmVI/K66BSEDAkzTR0ep2BzUMawNmtQ==
-  dependencies:
-    "@revenuecat/purchases-typescript-internal" "11.1.1"
 
 react-native-reanimated@~3.17.4:
   version "3.17.5"

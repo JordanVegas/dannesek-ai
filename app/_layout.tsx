@@ -1,33 +1,29 @@
-import { useFonts } from 'expo-font';
-import { Slot, SplashScreen, Stack, useRouter, useSegments } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { GestureHandlerRootView, TouchableOpacity } from 'react-native-gesture-handler';
 import { ClerkProvider, useAuth } from '@clerk/clerk-expo';
+import * as SplashScreen from 'expo-splash-screen';
 import * as SecureStore from 'expo-secure-store';
+import { useFonts } from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
-import { ActivityIndicator, TouchableOpacity, View } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Slot, Stack, useRouter, useSegments } from 'expo-router';
+import Constants from 'expo-constants';
 
-const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
-// Cache the Clerk JWT
+const CLERK_PUBLISHABLE_KEY = Constants.expoConfig?.extra?.CLERK_PUBLISHABLE_KEY;
+
 const tokenCache = {
   async getToken(key: string) {
     try {
       return SecureStore.getItemAsync(key);
-    } catch (err) {
+    } catch {
       return null;
     }
   },
   async saveToken(key: string, value: string) {
     try {
       return SecureStore.setItemAsync(key, value);
-    } catch (err) {
-      return;
-    }
+    } catch {}
   },
 };
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
 
 const InitialLayout = () => {
   const [loaded, error] = useFonts({
@@ -37,10 +33,16 @@ const InitialLayout = () => {
   const segments = useSegments();
   const router = useRouter();
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
-    if (error) throw error;
+    if (error) {
+      console.error('Error loading fonts:', error);
+      throw error;
+    }
   }, [error]);
+
+  useEffect(() => {
+    console.log("Loaded:", loaded, "isLoaded:", isLoaded, "segments:", segments, "signedIn:", isSignedIn);
+  }, [isLoaded, loaded, segments, isSignedIn]);
 
   useEffect(() => {
     if (loaded) {
@@ -49,16 +51,22 @@ const InitialLayout = () => {
   }, [loaded]);
 
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isLoaded || !loaded) return;
 
-    const inAuthGroup = segments[0] === '(auth)';
+    if (!segments || segments.length === 0) return;
+
+    const inAuthGroup = segments[0]?.startsWith('(auth)');
 
     if (isSignedIn && !inAuthGroup) {
-      router.replace('/(auth)/(drawer)/(chat)/new');
-    } else if (!isSignedIn) {
-      router.replace('/');
+      requestAnimationFrame(() => {
+        router.replace('/(auth)/(drawer)/(chat)/new');
+      });
+    } else if (!isSignedIn && inAuthGroup) {
+      requestAnimationFrame(() => {
+        router.replace('/');
+      });
     }
-  }, [isSignedIn]);
+  }, [isLoaded, loaded, isSignedIn, segments]);
 
   if (!loaded || !isLoaded) {
     return <Slot />;
@@ -68,9 +76,7 @@ const InitialLayout = () => {
     <Stack>
       <Stack.Screen
         name="index"
-        options={{
-          headerShown: false,
-        }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="login"
@@ -92,7 +98,19 @@ const InitialLayout = () => {
   );
 };
 
-const RootLayoutNav = () => {
+export default function RootLayoutNav() {
+  const [appReady, setAppReady] = useState(false);
+
+  useEffect(() => {
+    const prepare = async () => {
+      await new Promise((res) => setTimeout(res, 4000));
+      setAppReady(true);
+    };
+    prepare();
+  }, []);
+
+  if (!appReady) return null;
+
   return (
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY!} tokenCache={tokenCache}>
       <GestureHandlerRootView style={{ flex: 1 }}>
@@ -100,6 +118,4 @@ const RootLayoutNav = () => {
       </GestureHandlerRootView>
     </ClerkProvider>
   );
-};
-
-export default RootLayoutNav;
+}

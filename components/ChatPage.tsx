@@ -132,8 +132,11 @@ const ChatPage = () => {
         fileIds.push(id);
       }
     }
+    console.log('awaiting reply');
+    
 
     const reply = await talkToAssistant(text, fileIds.length > 0 ? fileIds : undefined, threadId ?? undefined);
+console.log('reply', reply);
 
     setMessages((prev) => [...prev, { role: Role.Bot, content: '' }]);
 

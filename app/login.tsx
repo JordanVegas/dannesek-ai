@@ -2,7 +2,7 @@ import Colors from '@/constants/Colors';
 import { defaultStyles } from '@/constants/Styles';
 import { useSignIn, useSignUp } from '@clerk/clerk-expo';
 import { useLocalSearchParams } from 'expo-router';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   StyleSheet,
