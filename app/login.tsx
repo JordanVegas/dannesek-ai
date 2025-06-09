@@ -89,12 +89,14 @@ const Login = () => {
         <TextInput
           autoCapitalize="none"
           placeholder="dan@gmail.com"
+          placeholderTextColor={'#aaa'}
           value={emailAddress}
           onChangeText={setEmailAddress}
           style={styles.inputField}
         />
         <TextInput
           placeholder="password"
+                    placeholderTextColor={'#aaa'}
           value={password}
           onChangeText={setPassword}
           secureTextEntry

@@ -64,7 +64,7 @@ export const addChat = async (db: SQLiteDatabase, title: string, threadId?: stri
 };
 
 export const getChats = async (db: SQLiteDatabase) => {
-  return await db.getAllAsync('SELECT * FROM chats');
+  return await db.getAllAsync('SELECT * FROM chats ORDER BY id DESC');
 };
 
 export const getMessages = async (db: SQLiteDatabase, chatId: number): Promise<Message[]> => {

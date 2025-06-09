@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
     position: 'absolute',
     left: '0%',
-    height: 60,
+    height: 50,
   },
   ball: {
     width: 40,
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     position: 'absolute',
     left: '0%',
-    top: '10'
+    top: 10
   },
   titleText: {
     flexDirection: 'row',

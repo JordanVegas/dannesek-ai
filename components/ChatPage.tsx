@@ -142,7 +142,7 @@ console.log('reply', reply);
 
     let i = 0;
     const interval = setInterval(() => {
-      i += 6;
+      i += 1;
       setMessages((prev) => {
         const updated = [...prev];
         const botMsg = updated[updated.length - 1];
@@ -157,7 +157,7 @@ console.log('reply', reply);
         clearInterval(interval);
         setIsTyping(false);
       }
-    }, 3);
+    }, 70);
 
     await addMessage(db, parseInt(chatIdRef.current), {
       content: reply,
@@ -176,6 +176,7 @@ console.log('reply', reply);
                 value={chatName}
                 onChangeText={setChatName}
                 placeholder="enter the girl's name"
+                placeholderTextColor={'#aaa'}
                 style={styles.modalInput}
               />
               <Button color="black" title="save" onPress={createNamedChat} />
@@ -225,7 +226,7 @@ console.log('reply', reply);
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={70}
+        keyboardVerticalOffset={0}
         style={{ position: 'absolute', bottom: 0, left: 0, width: '100%' }}
       >
         {messages.length === 0 && <MessageIdeas onSelectCard={getCompletion} />}

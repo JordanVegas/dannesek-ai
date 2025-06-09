@@ -60,8 +60,12 @@ export const uploadImageToOpenAI = async (uri: string): Promise<string | null> =
 export const talkToAssistant = async (userInput: string, imageFileIds?: string[]): Promise<string> => {
   console.log('🗣️ Talking to assistant:', userInput, imageFileIds);
   console.log('Using API');
+  console.log('API Key:', OPENAI_API_KEY);
+  console.log('Assistant ID:', OPENAI_ASSISTANT_ID);
+  console.log('Organization:', OPENAI_ORGANIZATION);
   
-  if (!API_KEY || !ASSISTANT_ID || !ORGANIZATION) {
+  
+  if (!OPENAI_API_KEY || !OPENAI_ASSISTANT_ID || !OPENAI_ORGANIZATION) {
    // Alert.alert('Missing API Key, Assistant ID, or Org ID');
     console.log('Error: Missing credentials');
   }
@@ -75,7 +79,7 @@ console.log('Using Organization:', OPENAI_ORGANIZATION);
     const assistantList = await assistantCheckRes.json();
     if (!assistantCheckRes.ok) return 'Error checking assistants';
 
-    const found = assistantList.data.find((a: any) => a.id === ASSISTANT_ID);
+    const found = assistantList.data.find((a: any) => a.id === OPENAI_ASSISTANT_ID);
     if (!found) return 'Error: Assistant not found';
 
     // Create thread if needed
@@ -119,7 +123,7 @@ console.log('Sending message:', messagePayload);
     const runRes = await fetch(`${BASE_URL}/threads/${threadId}/runs`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ assistant_id: ASSISTANT_ID }),
+      body: JSON.stringify({ assistant_id: OPENAI_ASSISTANT_ID }),
     });
     if (!runRes.ok) return 'Error creating run';
     const run = await runRes.json();
@@ -137,7 +141,7 @@ console.log('Sending message:', messagePayload);
       if (status === 'failed' || status === 'cancelled') return `Run ${status}`;
 
       if (status !== 'completed') {
-        await new Promise((res) => setTimeout(res, 1000));
+        await new Promise((res) => setTimeout(res, 500));
         retries++;
       }
     }

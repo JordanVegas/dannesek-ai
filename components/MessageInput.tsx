@@ -33,11 +33,11 @@ const [attachedImages, setAttachedImages] = useState<string[]>([]);
   const inputRef = useRef<TextInput>(null);
 
   const expandItems = () => {
-    expanded.value = withTiming(1, { duration: 400 });
+    expanded.value = withTiming(1, { duration: 1 });
   };
 
   const collapseItems = () => {
-    expanded.value = withTiming(0, { duration: 400 });
+    expanded.value = withTiming(0, { duration: 1 });
   };
 
   const expandButtonStyle = useAnimatedStyle(() => {
@@ -137,6 +137,7 @@ const onImagePick = async () => {
       autoFocus
       ref={inputRef}
       placeholder="Message"
+      placeholderTextColor={'#aaa'}
       style={styles.messageInput}
       onFocus={collapseItems}
       onChangeText={onChangeText}

@@ -1,35 +1,39 @@
 import { Drawer } from 'expo-router/drawer';
-import { DrawerContentScrollView } from '@react-navigation/drawer';
-import { useNavigation, useRouter, Link, useSegments, useLocalSearchParams } from 'expo-router';
+import {
+  DrawerContentScrollView,
+  useDrawerStatus,
+} from '@react-navigation/drawer';
+import {
+  useNavigation,
+  DrawerActions,
+  useNavigationState,
+} from '@react-navigation/native';
+import { useRouter, Link } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  Image,
-  Text,
   View,
-  StyleSheet,
+  Text,
   TouchableOpacity,
-  useWindowDimensions,
+  StyleSheet,
+  Image,
   TextInput,
   Alert,
-  Keyboard,
   Modal,
+  Keyboard,
+  useWindowDimensions,
 } from 'react-native';
-import Colors from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { FontAwesome6 } from '@expo/vector-icons';
-import { DrawerActions } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
+import Colors from '@/constants/Colors';
 import { getChats, renameChat } from '@/utils/Database';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useDrawerStatus } from '@react-navigation/drawer';
 import { Chat } from '@/utils/Interfaces';
 import * as ContextMenu from 'zeego/context-menu';
-// import { useRevenueCat } from '@/providers/RevenueCat';
+import { useRevenueCat } from '@/providers/RevenueCat';
 import { useClerk } from '@clerk/clerk-expo';
-import { useNavigationState } from '@react-navigation/native';
 
-
-export const CustomDrawerContent = (props: any) => {
+const CustomDrawerContent = (props: any) => {
   const { bottom, top } = useSafeAreaInsets();
   const db = useSQLiteContext();
   const isDrawerOpen = useDrawerStatus() === 'open';
@@ -41,19 +45,16 @@ export const CustomDrawerContent = (props: any) => {
   const router = useRouter();
   const { user: authUser } = useClerk();
 
-const currentChatId = useNavigationState((state) => {
-  const drawerRoute = state.routes.find(r => r.name === '(drawer)');
-  if (!drawerRoute || !('state' in drawerRoute)) return null;
+  const currentChatId = useNavigationState((state) => {
+    const drawerRoute = state.routes.find((r) => r.name === '(drawer)');
+    if (!drawerRoute || !('state' in drawerRoute)) return null;
 
-  const nestedState = drawerRoute.state;
-  if (!nestedState || !('routes' in nestedState)) return null;
+    const nestedState = drawerRoute.state;
+    if (!nestedState || !('routes' in nestedState)) return null;
 
-  const chatRoute = nestedState.routes.find(r => r.name === '(chat)/[id]');
-  return chatRoute?.params?.id ?? null;
-});
-
-console.log(currentChatId);
-
+    const chatRoute = nestedState.routes.find((r) => r.name === '(chat)/[id]');
+    return chatRoute?.params?.id ?? null;
+  });
 
   useEffect(() => {
     loadChats();
@@ -85,7 +86,7 @@ console.log(currentChatId);
     setRenameModalVisible(true);
   };
 
-  const filteredHistory = history.filter(chat =>
+  const filteredHistory = history.filter((chat) =>
     chat.title.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -97,6 +98,7 @@ console.log(currentChatId);
           <TextInput
             style={styles.input}
             placeholder="Search"
+            placeholderTextColor={'#aaa'}
             value={search}
             onChangeText={setSearch}
             underlineColorAndroid="transparent"
@@ -108,21 +110,21 @@ console.log(currentChatId);
       </View>
 
       <DrawerContentScrollView {...props} contentContainerStyle={{ backgroundColor: '#fff', paddingTop: 0 }}>
-{filteredHistory.map((chat) => {
-  const isActive = String(chat.id) === currentChatId;
-  return (
-    <ContextMenu.Root key={chat.id}>
-      <ContextMenu.Trigger>
-        <TouchableOpacity
-          onPress={() => router.push(`/(auth)/(drawer)/(chat)/${chat.id}`)}
-          style={[
-            styles.drawerItem,
-            isActive && { backgroundColor: Colors.selected },
-          ]}
-        >
-          <Text style={styles.drawerLabel}>{chat.title}</Text>
-        </TouchableOpacity>
-      </ContextMenu.Trigger>
+        {filteredHistory.map((chat) => {
+          const isActive = String(chat.id) === currentChatId;
+          return (
+            <ContextMenu.Root key={chat.id}>
+              <ContextMenu.Trigger>
+                <TouchableOpacity
+                  onPress={() => router.push(`/(auth)/(drawer)/(chat)/${chat.id}`)}
+                  style={[
+                    styles.drawerItem,
+                    isActive && { backgroundColor: Colors.selected },
+                  ]}
+                >
+                  <Text style={styles.drawerLabel}>{chat.title}</Text>
+                </TouchableOpacity>
+              </ContextMenu.Trigger>
               <ContextMenu.Content>
                 <ContextMenu.Preview>
                   {() => (
@@ -172,6 +174,7 @@ console.log(currentChatId);
                 value={newTitle}
                 onChangeText={setNewTitle}
                 placeholder="Enter new title"
+                placeholderTextColor={'#aaa'}
               />
               <View style={styles.modalActions}>
                 <TouchableOpacity onPress={() => setRenameModalVisible(false)} style={styles.modalButton}>
@@ -200,13 +203,23 @@ console.log(currentChatId);
   );
 };
 
-const Layout = () => {
+const DrawerToggleButton = () => {
   const navigation = useNavigation();
+  return (
+    <TouchableOpacity
+      onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
+      style={{ marginLeft: 16 }}
+    >
+      <FontAwesome6 name="grip-lines" size={20} color={Colors.grey} />
+    </TouchableOpacity>
+  );
+};
+
+const Layout = () => {
   const dimensions = useWindowDimensions();
-  // const { user } = useRevenueCat();
   const router = useRouter();
 
-  const handleNewChat = async () => {
+  const handleNewChat = () => {
     router.push('/(auth)/(drawer)/(chat)/new');
   };
 
@@ -214,14 +227,6 @@ const Layout = () => {
     <Drawer
       drawerContent={CustomDrawerContent}
       screenOptions={{
-        headerLeft: () => (
-          <TouchableOpacity
-            onPress={() => navigation.dispatch(DrawerActions.toggleDrawer)}
-            style={{ marginLeft: 16 }}
-          >
-            <FontAwesome6 name="grip-lines" size={20} color={Colors.grey} />
-          </TouchableOpacity>
-        ),
         headerStyle: {
           backgroundColor: Colors.light,
         },
@@ -239,9 +244,15 @@ const Layout = () => {
         name="(chat)/[id]"
         options={{
           drawerItemStyle: { display: 'none' },
+          headerLeft: () => <DrawerToggleButton />,
           headerRight: () => (
             <TouchableOpacity onPress={handleNewChat}>
-              <Ionicons name="create-outline" size={24} color={Colors.grey} style={{ marginRight: 16 }} />
+              <Ionicons
+                name="create-outline"
+                size={24}
+                color={Colors.grey}
+                style={{ marginRight: 16 }}
+              />
             </TouchableOpacity>
           ),
         }}

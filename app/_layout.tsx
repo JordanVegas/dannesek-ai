@@ -25,6 +25,8 @@ const tokenCache = {
   },
 };
 
+SplashScreen.preventAutoHideAsync();
+
 const InitialLayout = () => {
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
@@ -53,7 +55,7 @@ const InitialLayout = () => {
   useEffect(() => {
     if (!isLoaded || !loaded) return;
 
-    if (!segments || segments.length === 0) return;
+    // if (!segments || segments.length === 0) return;
 
     const inAuthGroup = segments[0]?.startsWith('(auth)');
 
@@ -99,17 +101,17 @@ const InitialLayout = () => {
 };
 
 export default function RootLayoutNav() {
-  const [appReady, setAppReady] = useState(false);
+  // const [appReady, setAppReady] = useState(false);
 
-  useEffect(() => {
-    const prepare = async () => {
-      await new Promise((res) => setTimeout(res, 4000));
-      setAppReady(true);
-    };
-    prepare();
-  }, []);
+  // useEffect(() => {
+  //   const prepare = async () => {
+  //     await new Promise((res) => setTimeout(res, 4000));
+  //     setAppReady(true);
+  //   };
+  //   prepare();
+  // }, []);
 
-  if (!appReady) return null;
+  // if (!appReady) return null;
 
   return (
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY!} tokenCache={tokenCache}>
